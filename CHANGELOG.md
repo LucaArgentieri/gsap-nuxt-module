@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.1.2
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.1...v1.1.2)
+
+### 🚀 Enhancements
+
+- Update GSAP to version 3.13.0 and enhance plugin support ([b52f240](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/b52f240))
+
+### 🏡 Chore
+
+- **release:** V1.1.1 ([a05da9f](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/a05da9f))
+
+### ❤️ Contributors
+
+- LucaArgentieri <lucaargentieri-98@hotmail.it>
+
 ## v1.1.1
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.1...v1.1.1)
