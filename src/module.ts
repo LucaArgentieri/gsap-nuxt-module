@@ -1,11 +1,14 @@
 import { fileURLToPath } from 'node:url'
 import { defineNuxtModule, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
+import type { gsapPlugins } from './runtime/gsap-plugins'
+
+export type GSAPPluginName = keyof typeof gsapPlugins
 
 export interface ModuleOptions {
-  plugins?: ('Draggable' | 'EaselPlugin' | 'Flip' | 'MotionPathPlugin' | 'Observer' | 'PixiPlugin' | 'ScrollToPlugin' | 'ScrollTrigger' | 'TextPlugin' | 'RoughEase' | 'ExpoScaleEase' | 'SlowMo' | 'CustomEase')[]
+  plugins?: GSAPPluginName[]
 }
 
-export default defineNuxtModule <ModuleOptions> ({
+export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'gsap-nuxt-module',
     configKey: 'gsap',

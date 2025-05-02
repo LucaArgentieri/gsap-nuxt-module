@@ -1,5 +1,6 @@
 <script setup>
 const nuxtLogoRef = ref(null)
+const MotionPathHelper = useMotionPathHelper()
 
 onMounted(() => {
   const nuxtLogo = nuxtLogoRef.value.$el
@@ -11,7 +12,7 @@ onMounted(() => {
     { x: -50, y: -50 },
   ]
 
-  gsap.to(nuxtLogo, {
+  const tween = gsap.to(nuxtLogo, {
     duration: 5,
     motionPath: {
       path,
@@ -23,6 +24,8 @@ onMounted(() => {
     yoyo: true,
     ease: 'linear',
   })
+
+  MotionPathHelper.create(tween)
 })
 </script>
 

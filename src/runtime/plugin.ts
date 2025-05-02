@@ -2,22 +2,44 @@ import { gsap } from 'gsap'
 import { gsapPlugins } from './gsap-plugins'
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 
-/**
- * Register GSAP plugins only if required in module options
- */
-
-export default defineNuxtPlugin(async (_nuxtApp) => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const config = useRuntimeConfig().public.gsap
-  const pluginsToRegister = config.plugins || []
+  const pluginsToRegister = new Set(config.plugins || []) as Set<keyof typeof gsapPlugins>
 
-  for (const pluginName of pluginsToRegister as (keyof typeof gsapPlugins)[]) {
-    if (gsapPlugins[pluginName as keyof typeof gsapPlugins]) {
-      const plugin = await gsapPlugins[pluginName]()
-      _nuxtApp.provide(pluginName, plugin)
-      gsap.registerPlugin(plugin)
+  const pluginDependencies: Partial<Record<keyof typeof gsapPlugins, (keyof typeof gsapPlugins)[]>> = {
+    ScrollSmoother: ['ScrollTrigger'],
+    CustomWiggle: ['CustomEase'],
+    CustomBounce: ['CustomEase'],
+  }
+
+  const resolvedPlugins = new Set<keyof typeof gsapPlugins>()
+  const resolvePlugin = (plugin: keyof typeof gsapPlugins) => {
+    if (resolvedPlugins.has(plugin)) return
+    const deps = pluginDependencies[plugin] || []
+    deps.forEach(resolvePlugin)
+    resolvedPlugins.add(plugin)
+  }
+
+  for (const plugin of pluginsToRegister) {
+    resolvePlugin(plugin)
+  }
+
+  // Load and register all plugins
+  for (const pluginName of resolvedPlugins) {
+    const loader = gsapPlugins[pluginName]
+    if (!loader) {
+      throw new Error(
+        `[gsap-nuxt-module] Plugin "${pluginName}" not found. Available plugins: ${Object.keys(gsapPlugins).join(', ')}`,
+      )
     }
-    else {
-      throw new Error(`[gsap-nuxt-module] Plugin "${pluginName}" not found, available plugins: ${Object.keys(gsapPlugins).join(', ')}`)
+
+    try {
+      const plugin = await loader()
+      gsap.registerPlugin(plugin)
+      nuxtApp.provide(pluginName, plugin)
+    }
+    catch (err) {
+      console.error(`[gsap-nuxt-module] Failed to load plugin "${pluginName}":`, err)
     }
   }
 })
