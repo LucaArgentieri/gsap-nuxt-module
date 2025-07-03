@@ -15,7 +15,7 @@
 
 ### ❤️ Contributors
 
-- LucaArgentieri <lucaargentieri-98@hotmail.it>
+- [Luca Argentieri](https://github.com/LucaArgentieri)
 
 ## v1.1.1
 
