@@ -1,6 +1,25 @@
 # Changelog
 
 
+## v1.1.4
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.2...v1.1.4)
+
+### 🚀 Enhancements
+
+- Update GSAP to version 3.13.0 and enhance plugin support ([b52f240](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/b52f240))
+
+### 🏡 Chore
+
+- **release:** V1.1.2 ([0a226a7](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/0a226a7))
+- Add dependabot configuration for gsap dependencies ([64c8c40](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/64c8c40))
+- Update .npmrc to include GitHub package registry configuration ([d796b08](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/d796b08))
+- Update .npmrc to use GH_TOKEN for GitHub package authentication ([b5b79eb](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/b5b79eb))
+
+### ❤️ Contributors
+
+- LucaArgentieri <lucaargentieri-98@hotmail.it>
+
 ## v1.1.2
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.1...v1.1.2)
