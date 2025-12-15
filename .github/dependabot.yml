@@ -9,5 +9,4 @@ updates:
     commit-message:
       prefix: "deps"
     labels:
-      - "dependencies"
-      - "gsap"
+      - "GSAP Release"
