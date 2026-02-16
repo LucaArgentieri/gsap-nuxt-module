@@ -1,6 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "GSAP updates - create PR but don't automerge",
+      "matchPackageNames": ["gsap"],
+      "automerge": false,
+      "labels": ["gsap-update", "dependencies"],
+      "reviewers": ["LucaArgentieri"],
+      "prPriority": 10
+    },
+    {
+      "description": "Auto-merge patch and minor updates for other dependencies",
+      "matchPackageNames": ["!gsap"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Major updates require manual review",
+      "matchPackageNames": ["!gsap"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major-update"]
+    }
   ]
 }
