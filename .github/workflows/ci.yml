@@ -13,4 +13,4 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bunx nuxi prepare
-      - run: bun test
+      - run: bun run test
