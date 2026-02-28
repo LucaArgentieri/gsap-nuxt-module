@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const customEase = useCustomEase()
-const box = ref(null)
-let tween = null
+const box = ref<HTMLElement | null>(null)
+let tween: ReturnType<typeof gsap.fromTo> | null = null
 
 onMounted(() => {
+  if (!customEase || !box.value) return
+
   tween = gsap.fromTo(box.value, {
     x: -300,
   }, {

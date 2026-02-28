@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const CustomWiggle = useCustomWiggle()
-const box = ref(null)
-let tween = null
+const box = ref<HTMLElement | null>(null)
+let tween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
+  if (!CustomWiggle || !box.value) return
+
   CustomWiggle.create('myWiggle', { wiggles: 15 })
 
   tween = gsap.to(box.value, { y: 60, x: 60, duration: 2, rotation: 30, ease: 'myWiggle' })

@@ -1,56 +1,64 @@
 <script setup lang="ts">
-const Draggable = useDraggable();
+import type { Draggable as DraggablePlugin } from 'gsap/all'
 
-const nuxtLogoRef = ref<any>(null);
-const gsapLogoRef = ref<any>(null);
+const Draggable = useDraggable()
 
-let draggables: any[] = [];
+type LogoComponentRef = {
+  $el: HTMLElement
+}
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+
+let draggables: DraggablePlugin[] = []
 
 onMounted(() => {
-  if (!Draggable) return;
+  if (!Draggable || !nuxtLogoRef.value || !gsapLogoRef.value) return
   draggables = [
     ...Draggable.create(nuxtLogoRef.value.$el),
     ...Draggable.create(gsapLogoRef.value.$el),
-  ];
-});
+  ]
+})
 
 onUnmounted(() => {
-  draggables.forEach((d) => d.kill());
-  draggables = [];
-});
+  draggables.forEach(d => d.kill())
+  draggables = []
+})
 
 const demos = [
-  { label: "useGsap", path: "/use-gsap" },
-  { label: "ScrollTrigger", path: "/scroll-trigger" },
-  { label: "Draggable", path: "/draggable" },
-  { label: "Flip", path: "/flip" },
-  { label: "Observer", path: "/observer" },
-  { label: "SplitText", path: "/split-text" },
-  { label: "TextPlugin", path: "/text-plugin" },
-  { label: "ScrambleText", path: "/scramble-text" },
-  { label: "ScrollSmoother", path: "/scroll-smoother" },
-  { label: "ScrollToPlugin", path: "/scroll-to-plugin" },
-  { label: "MotionPath", path: "/motion-path-plugin" },
-  { label: "MorphSVG", path: "/morph-svg" },
-  { label: "DrawSVG", path: "/draw-svg" },
-  { label: "CustomEase", path: "/custom-ease" },
-  { label: "CustomBounce", path: "/custom-bounce" },
-  { label: "CustomWiggle", path: "/custom-wiggle" },
-  { label: "ExpoScaleEase", path: "/expo-scale" },
-  { label: "RoughEase", path: "/rough-ease" },
-  { label: "SlowMo", path: "/slow-mo" },
-  { label: "Inertia", path: "/inertia" },
-  { label: "Physics2D", path: "/physics-2d" },
-  { label: "EaselPlugin", path: "/easel-plugin" },
-  { label: "PixiPlugin", path: "/pixi-plugin" },
-  { label: "GSAPDevTools", path: "/gsap-dev-tools" },
-];
+  { label: 'useGsap', path: '/use-gsap' },
+  { label: 'ScrollTrigger', path: '/scroll-trigger' },
+  { label: 'Draggable', path: '/draggable' },
+  { label: 'Flip', path: '/flip' },
+  { label: 'Observer', path: '/observer' },
+  { label: 'SplitText', path: '/split-text' },
+  { label: 'TextPlugin', path: '/text-plugin' },
+  { label: 'ScrambleText', path: '/scramble-text' },
+  { label: 'ScrollSmoother', path: '/scroll-smoother' },
+  { label: 'ScrollToPlugin', path: '/scroll-to-plugin' },
+  { label: 'MotionPath', path: '/motion-path-plugin' },
+  { label: 'MorphSVG', path: '/morph-svg' },
+  { label: 'DrawSVG', path: '/draw-svg' },
+  { label: 'CustomEase', path: '/custom-ease' },
+  { label: 'CustomBounce', path: '/custom-bounce' },
+  { label: 'CustomWiggle', path: '/custom-wiggle' },
+  { label: 'ExpoScaleEase', path: '/expo-scale' },
+  { label: 'RoughEase', path: '/rough-ease' },
+  { label: 'SlowMo', path: '/slow-mo' },
+  { label: 'Inertia', path: '/inertia' },
+  { label: 'Physics2D', path: '/physics-2d' },
+  { label: 'EaselPlugin', path: '/easel-plugin' },
+  { label: 'PixiPlugin', path: '/pixi-plugin' },
+  { label: 'GSAPDevTools', path: '/gsap-dev-tools' },
+]
 </script>
 
 <template>
   <main>
     <section class="hero">
-      <p class="hero-label">Drag the logos</p>
+      <p class="hero-label">
+        Drag the logos
+      </p>
       <div class="logos">
         <NuxtLogo ref="nuxtLogoRef" />
         <GSAPLogo ref="gsapLogoRef" />
@@ -60,7 +68,12 @@ const demos = [
     <section class="demos">
       <h2>Plugin & Composable Demos</h2>
       <div class="grid">
-        <NuxtLink v-for="demo in demos" :key="demo.path" :to="demo.path" class="card">
+        <NuxtLink
+          v-for="demo in demos"
+          :key="demo.path"
+          :to="demo.path"
+          class="card"
+        >
           {{ demo.label }}
         </NuxtLink>
       </div>

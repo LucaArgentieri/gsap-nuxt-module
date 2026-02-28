@@ -1,17 +1,17 @@
 <script setup>
-const Draggable = useDraggable();
+const Draggable = useDraggable()
 
-const nuxtLogoRef = ref(null);
-let draggables = [];
+const nuxtLogoRef = ref(null)
+let draggables = []
 
 onMounted(() => {
-  draggables = Draggable.create(nuxtLogoRef.value.$el);
-});
+  draggables = Draggable.create(nuxtLogoRef.value.$el)
+})
 
 onUnmounted(() => {
-  draggables.forEach((instance) => instance.kill());
-  draggables = [];
-});
+  draggables.forEach(instance => instance.kill())
+  draggables = []
+})
 </script>
 
 <template>

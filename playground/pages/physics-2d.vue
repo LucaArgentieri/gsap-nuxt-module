@@ -1,9 +1,15 @@
 <script setup lang="ts">
-const nuxtLogoRef = ref(null)
-const gsapLogoRef = ref(null)
-let tween = null
+type LogoComponentRef = {
+  $el: HTMLElement
+}
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let tween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
+  if (!nuxtLogoRef.value || !gsapLogoRef.value) return
+
   tween = gsap.to([nuxtLogoRef.value.$el, gsapLogoRef.value.$el], {
     duration: 2,
     physics2D: { velocity: 300, angle: -60, gravity: 400 },

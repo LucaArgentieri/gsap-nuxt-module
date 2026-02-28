@@ -3,9 +3,11 @@ const ScrollSmoother = useScrollSmoother()
 
 const nuxtLogoRef = ref(null)
 const gsapLogoRef = ref(null)
-let smoother = null
+let smoother: { kill: () => void } | null = null
 
 onMounted(() => {
+  if (!ScrollSmoother) return
+
   smoother = ScrollSmoother.create({
     smooth: 1,
     effects: true, // looks for data-speed and data-lag attributes on elements

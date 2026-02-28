@@ -1,5 +1,5 @@
-import { gsap } from "gsap";
-import { createGsapComposable } from "../create-gsap-composable";
+import { gsap } from 'gsap'
+import { createGsapComposable } from '../create-gsap-composable'
 
 /**
  * Returns the GSAP instance for direct use.
@@ -13,38 +13,38 @@ import { createGsapComposable } from "../create-gsap-composable";
  * @see https://gsap.com/docs/v3/GSAP/
  */
 export function useGsap() {
-  return gsap;
+  return gsap
 }
 
 // Scroll Plugins
-export const useScrollTrigger =
-  createGsapComposable<typeof import("gsap/ScrollTrigger").ScrollTrigger>("ScrollTrigger");
-export const useScrollSmoother =
-  createGsapComposable<typeof import("gsap/ScrollSmoother").ScrollSmoother>("ScrollSmoother");
+export const useScrollTrigger
+  = createGsapComposable<typeof import('gsap/ScrollTrigger').ScrollTrigger>('ScrollTrigger')
+export const useScrollSmoother
+  = createGsapComposable<typeof import('gsap/ScrollSmoother').ScrollSmoother>('ScrollSmoother')
 
 // Text Plugins
-export const useSplitText =
-  createGsapComposable<typeof import("gsap/SplitText").SplitText>("SplitText");
+export const useSplitText
+  = createGsapComposable<typeof import('gsap/SplitText').SplitText>('SplitText')
 
 // SVG Plugins
-export const useMotionPathHelper =
-  createGsapComposable<typeof import("gsap/MotionPathHelper").MotionPathHelper>("MotionPathHelper");
+export const useMotionPathHelper
+  = createGsapComposable<typeof import('gsap/MotionPathHelper').MotionPathHelper>('MotionPathHelper')
 
 // UI Plugins
-export const useDraggable =
-  createGsapComposable<typeof import("gsap/Draggable").Draggable>("Draggable");
-export const useFlip = createGsapComposable<typeof import("gsap/Flip").Flip>("Flip");
-export const useObserver =
-  createGsapComposable<typeof import("gsap/Observer").Observer>("Observer");
+export const useDraggable
+  = createGsapComposable<typeof import('gsap/all').Draggable>('Draggable')
+export const useFlip = createGsapComposable<typeof import('gsap/all').Flip>('Flip')
+export const useObserver
+  = createGsapComposable<typeof import('gsap/all').Observer>('Observer')
 
 // Other Plugins
-export const useGSDevTools =
-  createGsapComposable<typeof import("gsap/GSDevTools").GSDevTools>("GSDevTools");
+export const useGSDevTools
+  = createGsapComposable<typeof import('gsap/GSDevTools').GSDevTools>('GSDevTools')
 
 // Eases
-export const useCustomEase =
-  createGsapComposable<typeof import("gsap/CustomEase").CustomEase>("CustomEase");
-export const useCustomWiggle =
-  createGsapComposable<typeof import("gsap/CustomWiggle").CustomWiggle>("CustomWiggle");
-export const useCustomBounce =
-  createGsapComposable<typeof import("gsap/CustomBounce").CustomBounce>("CustomBounce");
+export const useCustomEase
+  = createGsapComposable<typeof import('gsap/CustomEase').CustomEase>('CustomEase')
+export const useCustomWiggle
+  = createGsapComposable<typeof import('gsap/CustomWiggle').CustomWiggle>('CustomWiggle')
+export const useCustomBounce
+  = createGsapComposable<typeof import('gsap/CustomBounce').CustomBounce>('CustomBounce')

@@ -1,28 +1,30 @@
 <script setup>
-const textRef = ref(null);
-let tween = null;
+const textRef = ref(null)
+let tween = null
 
 onMounted(() => {
   tween = gsap.to(textRef.value, {
     text: {
-      value: "Your new text",
-      newClass: "new-text",
-      delimiter: " ",
+      value: 'Your new text',
+      newClass: 'new-text',
+      delimiter: ' ',
     },
-    ease: "expo.inOut",
+    ease: 'expo.inOut',
     duration: 5,
-  });
-});
+  })
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 </script>
 
 <template>
   <main>
-    <h1 ref="textRef">Text Plugin</h1>
+    <h1 ref="textRef">
+      Text Plugin
+    </h1>
   </main>
 </template>
 

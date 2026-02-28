@@ -1,14 +1,20 @@
 <script setup lang="ts">
 const GSDevTools = useGSDevTools()
 
-const nuxtLogoRef = ref(null)
-const gsapLogoRef = ref(null)
-let devTools = null
-let nuxtTween = null
-let gsapTween = null
+type LogoComponentRef = {
+  $el: HTMLElement
+}
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let devTools: { kill: () => void } | null = null
+let nuxtTween: ReturnType<typeof gsap.to> | null = null
+let gsapTween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
-  devTools = GSDevTools?.create()
+  if (!nuxtLogoRef.value || !gsapLogoRef.value) return
+
+  devTools = GSDevTools ? GSDevTools.create() : null
 
   nuxtTween = gsap.to(nuxtLogoRef.value.$el, {
     rotation: 360,

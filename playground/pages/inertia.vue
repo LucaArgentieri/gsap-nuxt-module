@@ -1,24 +1,32 @@
 <script setup lang="ts">
+import type { Draggable as DraggablePlugin } from 'gsap/all'
+
 const Draggable = useDraggable()
 
-const nuxtLogoRef = ref(null)
-const gsapLogoRef = ref(null)
-let draggables = []
+type LogoComponentRef = {
+  $el: HTMLElement
+}
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let draggables: DraggablePlugin[] = []
 
 onMounted(() => {
+  if (!Draggable || !nuxtLogoRef.value || !gsapLogoRef.value) return
+
   draggables = [
     ...Draggable.create(nuxtLogoRef.value.$el, {
-    inertia: true,
+      inertia: true,
 
     }),
     ...Draggable.create(gsapLogoRef.value.$el, {
-    inertia: true,
+      inertia: true,
     }),
   ]
 })
 
 onUnmounted(() => {
-  draggables.forEach((instance) => instance.kill())
+  draggables.forEach(instance => instance.kill())
   draggables = []
 })
 </script>

@@ -21,10 +21,10 @@ export const gsapPlugins = {
   MotionPathHelper: () => import('gsap/MotionPathHelper').then(mod => mod.MotionPathHelper),
 
   // UI Plugins
-  Flip: () => import('gsap/Flip').then(mod => mod.Flip),
-  Draggable: () => import('gsap/Draggable').then(mod => mod.Draggable),
+  Flip: () => import('gsap/flip').then(mod => mod.Flip),
+  Draggable: () => import('gsap/draggable').then(mod => mod.Draggable),
   InertiaPlugin: () => import('gsap/InertiaPlugin').then(mod => mod.InertiaPlugin),
-  Observer: () => import('gsap/Observer').then(mod => mod.Observer),
+  Observer: () => import('gsap/observer').then(mod => mod.Observer),
 
   // Other Plugins
   PixiPlugin: () => import('gsap/PixiPlugin').then(mod => mod.PixiPlugin),

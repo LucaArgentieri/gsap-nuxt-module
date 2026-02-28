@@ -1,10 +1,12 @@
 <script setup lang="ts">
 const CustomBounce = useCustomBounce()
-const box = ref(null)
-let bounceTween = null
-let squashTween = null
+const box = ref<HTMLElement | null>(null)
+let bounceTween: ReturnType<typeof gsap.from> | null = null
+let squashTween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
+  if (!CustomBounce || !box.value) return
+
   // Create a custom bounce ease:
   CustomBounce.create('myBounce', {
     strength: 0.6,
