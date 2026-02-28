@@ -18,7 +18,7 @@ Find and replace all on all files (CMD+SHIFT+F):
 
 **Enhance your Nuxt application with powerful animations and transitions using GSAP!**
 
-- [🏀 Online playground](https://stackblitz.com/github/LucaArgentieri/gsap-nuxt-module?file=playground%2Fapp.vue)
+- [🏀 Online playground](https://stackblitz.com/edit/gsap-nuxt-module?file=README.md)
 - [📖 GSAP](https://gsap.com/)
 
 ## Features
