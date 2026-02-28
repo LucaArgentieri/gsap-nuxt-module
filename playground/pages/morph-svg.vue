@@ -1,6 +1,13 @@
 <script setup>
+let tween = null
+
 onMounted(() => {
-  gsap.to('#circle', { duration: 1.5, morphSVG: '#hippo', repeat: -1, yoyo: true, repeatDelay: 0.2, ease: 'expo.inOut' })
+  tween = gsap.to('#circle', { duration: 1.5, morphSVG: '#hippo', repeat: -1, yoyo: true, repeatDelay: 0.2, ease: 'expo.inOut' })
+})
+
+onUnmounted(() => {
+  tween?.kill()
+  tween = null
 })
 </script>
 
@@ -36,6 +43,7 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
 svg {

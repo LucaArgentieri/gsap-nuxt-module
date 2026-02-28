@@ -1,12 +1,18 @@
 <script setup>
 const box = ref(null)
+let tween = null
 
 onMounted(() => {
-  gsap.fromTo(
+  tween = gsap.fromTo(
     box.value,
     { scale: 0.5 },
     { duration: 5, scale: 3, ease: 'expoScale(0.5, 3, power2.inOut)', repeat: -1, yoyo: true },
   )
+})
+
+onUnmounted(() => {
+  tween?.kill()
+  tween = null
 })
 </script>
 
@@ -27,6 +33,7 @@ onMounted(() => {
         width: 100%;
         height: 100vh;
         overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .box {

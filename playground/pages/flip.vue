@@ -2,6 +2,7 @@
 const Flip = useFlip()
 const box = ref(null)
 const circle = ref(null)
+let animation = null
 
 onMounted(() => {
   const squares = gsap.utils.toArray([box.value, circle.value])
@@ -14,7 +15,7 @@ onMounted(() => {
     swap(squares)
 
     // Animate from the initial state to the end state
-    Flip.from(state, { duration: 2, ease: 'power1.inOut', repeat: -1, yoyo: true })
+    animation = Flip.from(state, { duration: 2, ease: 'power1.inOut', repeat: -1, yoyo: true })
   }
 
   // Given an Array of two siblings, append the one that's first so it's last (swap)
@@ -23,6 +24,11 @@ onMounted(() => {
   }
 
   doFlip()
+})
+
+onUnmounted(() => {
+  animation?.kill()
+  animation = null
 })
 </script>
 
@@ -48,6 +54,7 @@ onMounted(() => {
         width: 100%;
         height: 100vh;
         overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .box {

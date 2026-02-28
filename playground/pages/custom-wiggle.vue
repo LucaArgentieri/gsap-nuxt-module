@@ -1,11 +1,17 @@
 <script setup lang="ts">
 const CustomWiggle = useCustomWiggle()
 const box = ref(null)
+let tween = null
 
 onMounted(() => {
   CustomWiggle.create('myWiggle', { wiggles: 15 })
 
-  gsap.to(box.value, { y: 60, x: 60, duration: 2, rotation: 30, ease: 'myWiggle' })
+  tween = gsap.to(box.value, { y: 60, x: 60, duration: 2, rotation: 30, ease: 'myWiggle' })
+})
+
+onUnmounted(() => {
+  tween?.kill()
+  tween = null
 })
 </script>
 
@@ -26,6 +32,7 @@ onMounted(() => {
         width: 100%;
         height: 100vh;
         overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .box {

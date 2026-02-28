@@ -1,9 +1,10 @@
 <script setup lang="ts">
 const customEase = useCustomEase()
 const box = ref(null)
+let tween = null
 
 onMounted(() => {
-  gsap.fromTo(box.value, {
+  tween = gsap.fromTo(box.value, {
     x: -300,
   }, {
     x: 300,
@@ -12,6 +13,11 @@ onMounted(() => {
     yoyo: true,
     repeat: -1,
   })
+})
+
+onUnmounted(() => {
+  tween?.kill()
+  tween = null
 })
 </script>
 
@@ -32,6 +38,7 @@ onMounted(() => {
         width: 100%;
         height: 100vh;
         overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .box {

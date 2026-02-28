@@ -3,15 +3,23 @@ const Draggable = useDraggable()
 
 const nuxtLogoRef = ref(null)
 const gsapLogoRef = ref(null)
+let draggables = []
 
 onMounted(() => {
-  Draggable.create(nuxtLogoRef.value.$el, {
+  draggables = [
+    ...Draggable.create(nuxtLogoRef.value.$el, {
     inertia: true,
 
-  })
-  Draggable.create(gsapLogoRef.value.$el, {
+    }),
+    ...Draggable.create(gsapLogoRef.value.$el, {
     inertia: true,
-  })
+    }),
+  ]
+})
+
+onUnmounted(() => {
+  draggables.forEach((instance) => instance.kill())
+  draggables = []
 })
 </script>
 
@@ -30,5 +38,6 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 </style>

@@ -3,6 +3,7 @@ const Observer = useObserver()
 
 const nuxtLogoRef = ref(null)
 const gsapLogoRef = ref(null)
+let observer = null
 
 const next = () => {
   gsap.to(gsapLogoRef.value.$el, {
@@ -27,12 +28,17 @@ const previous = () => {
 }
 
 onMounted(() => {
-  Observer.create({
+  observer = Observer.create({
     target: window,
     type: 'wheel,touch',
     onUp: () => previous(),
     onDown: () => next(),
   })
+})
+
+onUnmounted(() => {
+  observer?.kill()
+  observer = null
 })
 </script>
 
@@ -52,6 +58,7 @@ main {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 
 section {

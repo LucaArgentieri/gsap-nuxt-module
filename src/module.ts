@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url'
 import { defineNuxtModule, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
 import type { gsapPlugins } from './runtime/gsap-plugins'
 
@@ -20,15 +19,14 @@ export default defineNuxtModule<ModuleOptions>({
     plugins: [],
   },
   setup(_options, _nuxt) {
-    const resolver = createResolver(import.meta.url)
-    const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
+    const { resolve } = createResolver(import.meta.url)
 
     _nuxt.options.runtimeConfig.public.gsap = {
       plugins: _options.plugins ?? [],
     }
 
-    addPlugin(resolver.resolve('./runtime/plugin'))
-    addImportsDir(resolver.resolve(runtimeDir, 'composables'))
-    addImportsDir(resolver.resolve(runtimeDir, 'utils'))
+    addPlugin({ src: resolve('./runtime/plugin'), mode: 'client' })
+    addImportsDir(resolve('./runtime/composables'))
+    addImportsDir(resolve('./runtime/utils'))
   },
 })

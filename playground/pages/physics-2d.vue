@@ -1,9 +1,10 @@
 <script setup lang="ts">
 const nuxtLogoRef = ref(null)
 const gsapLogoRef = ref(null)
+let tween = null
 
 onMounted(() => {
-  gsap.to([nuxtLogoRef.value.$el, gsapLogoRef.value.$el], {
+  tween = gsap.to([nuxtLogoRef.value.$el, gsapLogoRef.value.$el], {
     duration: 2,
     physics2D: { velocity: 300, angle: -60, gravity: 400 },
     stagger: 0.4,
@@ -12,6 +13,11 @@ onMounted(() => {
       y: { velocity: -200, friction: 0.1 },
     },
   })
+})
+
+onUnmounted(() => {
+  tween?.kill()
+  tween = null
 })
 </script>
 
@@ -30,5 +36,6 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 </style>

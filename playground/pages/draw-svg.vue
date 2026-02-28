@@ -1,19 +1,29 @@
 <script setup>
+let lineTween = null
+let circleTween = null
+
 onMounted(() => {
-  gsap.to('#lineSvg', {
+  lineTween = gsap.to('#lineSvg', {
     drawSVG: '0% 50%',
     duration: 2,
     repeat: -1,
     yoyo: true,
   })
 
-  gsap.from('#circleSvg circle', {
+  circleTween = gsap.from('#circleSvg circle', {
     drawSVG: '50% 50%',
     duration: 2,
     ease: 'power1.inOut',
     repeat: -1,
     yoyo: true,
   })
+})
+
+onUnmounted(() => {
+  lineTween?.kill()
+  circleTween?.kill()
+  lineTween = null
+  circleTween = null
 })
 </script>
 
@@ -57,5 +67,6 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 </style>

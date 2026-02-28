@@ -1,6 +1,8 @@
 <script setup>
 const nuxtLogoRef = ref(null)
 const MotionPathHelper = useMotionPathHelper()
+let helper = null
+let tween = null
 
 onMounted(() => {
   const nuxtLogo = nuxtLogoRef.value.$el
@@ -12,7 +14,7 @@ onMounted(() => {
     { x: -50, y: -50 },
   ]
 
-  const tween = gsap.to(nuxtLogo, {
+  tween = gsap.to(nuxtLogo, {
     duration: 5,
     motionPath: {
       path,
@@ -25,7 +27,12 @@ onMounted(() => {
     ease: 'linear',
   })
 
-  MotionPathHelper.create(tween)
+  helper = MotionPathHelper?.create(tween)
+})
+
+onUnmounted(() => {
+  helper?.kill()
+  tween?.kill()
 })
 </script>
 
@@ -43,5 +50,6 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 </style>

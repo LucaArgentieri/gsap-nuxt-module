@@ -3,23 +3,35 @@ const GSDevTools = useGSDevTools()
 
 const nuxtLogoRef = ref(null)
 const gsapLogoRef = ref(null)
+let devTools = null
+let nuxtTween = null
+let gsapTween = null
 
 onMounted(() => {
-  GSDevTools.create()
+  devTools = GSDevTools?.create()
 
-  gsap.to(nuxtLogoRef.value.$el, {
+  nuxtTween = gsap.to(nuxtLogoRef.value.$el, {
     rotation: 360,
     duration: 2,
     repeat: -1,
     ease: 'none',
   })
 
-  gsap.to(gsapLogoRef.value.$el, {
+  gsapTween = gsap.to(gsapLogoRef.value.$el, {
     rotation: -360,
     duration: 2,
     repeat: -1,
     ease: 'none',
   })
+})
+
+onUnmounted(() => {
+  devTools?.kill()
+  nuxtTween?.kill()
+  gsapTween?.kill()
+  devTools = null
+  nuxtTween = null
+  gsapTween = null
 })
 </script>
 
@@ -38,5 +50,6 @@ main {
     gap: 20px;
     height: 100svh;
     overflow: hidden;
+    overscroll-behavior: none;
 }
 </style>

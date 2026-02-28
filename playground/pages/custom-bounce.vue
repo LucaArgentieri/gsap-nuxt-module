@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const CustomBounce = useCustomBounce()
 const box = ref(null)
+let bounceTween = null
+let squashTween = null
 
 onMounted(() => {
   // Create a custom bounce ease:
@@ -11,16 +13,23 @@ onMounted(() => {
   })
 
   // do the bounce by affecting the "y" property.
-  gsap.from(box.value, { duration: 2, y: -200, ease: 'myBounce' })
+  bounceTween = gsap.from(box.value, { duration: 2, y: -200, ease: 'myBounce' })
 
   // and do the squash/stretch at the same time:
-  gsap.to(box.value, {
+  squashTween = gsap.to(box.value, {
     duration: 2,
     scaleX: 1.4,
     scaleY: 0.3,
     ease: 'myBounce-squash',
     transformOrigin: 'center bottom',
   })
+})
+
+onUnmounted(() => {
+  bounceTween?.kill()
+  squashTween?.kill()
+  bounceTween = null
+  squashTween = null
 })
 </script>
 
@@ -41,6 +50,7 @@ onMounted(() => {
         width: 100%;
         height: 100vh;
         overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .box {

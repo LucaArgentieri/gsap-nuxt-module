@@ -100,6 +100,114 @@ onMounted(() => {
 
 That's it! You can now use gsap-nuxt-module in your Nuxt app ✨
 
+## useGsap()
+
+`useGsap()` returns the GSAP instance directly — use it to access `gsap.timeline()`,
+`gsap.to()`, `gsap.set()`, utility methods like `gsap.utils.toArray()`, and more.
+No import needed; it is auto-imported like all other composables.
+
+```ts
+<script setup lang="ts">
+const gsap = useGsap()
+const boxRef = ref(null)
+
+onMounted(() => {
+  const tl = gsap.timeline({ repeat: -1, yoyo: true })
+  tl.to(boxRef.value, { x: 200, duration: 1, ease: 'power2.inOut' })
+    .to(boxRef.value, { rotation: 360, duration: 0.8 })
+})
+</script>
+```
+
+## Available composables
+
+| Composable | Plugin | `nuxt.config.ts` key |
+|---|---|---|
+| `useGsap()` | GSAP core | — (always available) |
+| `useScrollTrigger()` | ScrollTrigger | `ScrollTrigger` |
+| `useScrollSmoother()` | ScrollSmoother | `ScrollSmoother` |
+| `useSplitText()` | SplitText | `SplitText` |
+| `useMotionPathHelper()` | MotionPathHelper | `MotionPathHelper` |
+| `useDraggable()` | Draggable | `Draggable` |
+| `useFlip()` | Flip | `Flip` |
+| `useObserver()` | Observer | `Observer` |
+| `useGSDevTools()` | GSDevTools | `GSDevTools` |
+| `useCustomEase()` | CustomEase | `CustomEase` |
+| `useCustomWiggle()` | CustomWiggle | `CustomWiggle` |
+| `useCustomBounce()` | CustomBounce | `CustomBounce` |
+
+## Plugin loading
+
+Only plugins listed in `nuxt.config.ts` are dynamically imported —
+zero bundle overhead for unused plugins.
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  gsap: {
+    plugins: ['ScrollTrigger', 'Draggable'],
+    // only these two will be bundled
+  },
+})
+```
+
+## Cleanup
+
+GSAP animations are not automatically cleaned up when a component unmounts.
+Use `onUnmounted` to prevent memory leaks.
+
+Do not call `gsap.unregisterPlugin(...)` inside page/components: plugin registration is app-wide.
+In components, clean up only the instances created by that component.
+
+**Simple plugin instance cleanup (`Draggable`):**
+
+```ts
+<script setup lang="ts">
+const Draggable = useDraggable()
+const boxRef = ref<HTMLElement | null>(null)
+let draggables: ReturnType<typeof Draggable.create> = []
+
+onMounted(() => {
+  if (!boxRef.value) return
+  draggables = Draggable.create(boxRef.value)
+})
+
+onUnmounted(() => {
+  draggables.forEach((instance) => instance.kill())
+  draggables = []
+})
+</script>
+```
+
+See real cleanup examples in `playground/pages/draggable.vue`, `playground/pages/scroll-trigger.vue`, `playground/pages/split-text.vue`, and `playground/pages/scroll-smoother.vue`.
+
+**Recommended — `gsap.context()` (covers all child tweens, timelines and ScrollTriggers):**
+
+```ts
+<script setup lang="ts">
+const gsap = useGsap()
+let ctx: gsap.Context
+
+onMounted(() => {
+  ctx = gsap.context(() => {
+    gsap.to('.box', { x: 100 })
+  })
+})
+
+onUnmounted(() => ctx.revert())
+</script>
+```
+
+**Single timeline:**
+
+```ts
+const gsap = useGsap()
+const tl = gsap.timeline()
+onUnmounted(() => tl.kill())
+```
+
+→ [gsap.context() docs](https://gsap.com/docs/v3/GSAP/gsap.context())
+
 ## Contribution
 
 <details>
