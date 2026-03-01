@@ -6,6 +6,21 @@ vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
 }))
 
+// Intercept Vue lifecycle hooks so they can be triggered manually in tests.
+// This avoids needing @vue/test-utils while keeping tests isolated.
+const mountedCallbacks: Array<() => void> = []
+const disposeCallbacks: Array<() => void> = []
+
+vi.mock('vue', async () => {
+  const actual = await vi.importActual<typeof import('vue')>('vue')
+  return {
+    ...actual,
+    onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
+    onScopeDispose: vi.fn((cb: () => void) => { disposeCallbacks.push(cb) }),
+    watch: vi.fn(),
+  }
+})
+
 describe('createGsapComposable', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -62,5 +77,79 @@ describe('useGsap', () => {
 
     const result = useGsap()
     expect(result).toBe(gsap)
+  })
+})
+
+describe('useGsap with setup', () => {
+  beforeEach(() => {
+    mountedCallbacks.length = 0
+    disposeCallbacks.length = 0
+    vi.restoreAllMocks()
+  })
+
+  it('returns { contextSafe } when called with a setup function', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+
+    const result = useGsap(() => {})
+
+    expect(result).toHaveProperty('contextSafe')
+  })
+
+  it('contextSafe is a function', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+
+    const { contextSafe } = useGsap(() => {})
+
+    expect(typeof contextSafe).toBe('function')
+  })
+
+  it('contextSafe wraps a handler and calls through when ctx is set', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const mockCtx = {
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: vi.fn(),
+      kill: vi.fn(),
+      data: [],
+    }
+    vi.spyOn(gsap, 'context').mockReturnValue(mockCtx as unknown as gsap.Context)
+
+    const { contextSafe } = useGsap(() => {})
+    // Simulate onMounted — triggers runSetup() which sets ctx
+    mountedCallbacks.forEach(cb => cb())
+
+    const handler = vi.fn().mockReturnValue('ok')
+    const safeHandler = contextSafe(handler)
+    safeHandler()
+
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('reverts context on scope dispose', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const revertSpy = vi.fn()
+    vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: revertSpy,
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
+
+    useGsap(() => {})
+    // Simulate mount, then dispose
+    mountedCallbacks.forEach(cb => cb())
+    expect(revertSpy).not.toHaveBeenCalled()
+
+    disposeCallbacks.forEach(cb => cb())
+    expect(revertSpy).toHaveBeenCalledOnce()
+  })
+
+  it('backward compat: useGsap() without args still returns the raw gsap instance', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    expect(useGsap()).toBe(gsap)
   })
 })
