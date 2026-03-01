@@ -18,6 +18,7 @@ Find and replace all on all files (CMD+SHIFT+F):
 
 **Enhance your Nuxt application with powerful animations and transitions using GSAP!**
 
+- [📖 Documentation](https://lucaargentieri.github.io/gsap-nuxt-module/)
 - [🏀 Online playground](https://stackblitz.com/edit/gsap-nuxt-module?file=README.md)
 - [📖 GSAP](https://gsap.com/)
 
@@ -156,8 +157,8 @@ export default defineNuxtConfig({
 GSAP animations are not automatically cleaned up when a component unmounts.
 Use `onUnmounted` to prevent memory leaks.
 
-Do not call `gsap.unregisterPlugin(...)` inside page/components: plugin registration is app-wide.
-In components, clean up only the instances created by that component.
+Plugin registration is handled once by the module at app startup — never call `gsap.registerPlugin()` manually.
+In components, clean up only the instances your component created (tweens, timelines, ScrollTrigger instances, Draggable instances, etc.).
 
 **Simple plugin instance cleanup (`Draggable`):**
 

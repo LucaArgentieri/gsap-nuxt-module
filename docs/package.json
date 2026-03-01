@@ -1,0 +1,13 @@
+{
+  "name": "gsap-nuxt-module-docs",
+  "private": true,
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "generate": "nuxi generate",
+    "preview": "nuxi preview"
+  },
+  "dependencies": {
+    "docus": "^5.7.0"
+  }
+}

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*@theme static {
+  --color-gsap-50: #f0fdf3;
+  --color-gsap-100: #dcfce9;
+  --color-gsap-200: #b3f5c8;
+  --color-gsap-300: #7aec9f;
+  --color-gsap-400: #37db70;
+  --color-gsap-500: #0ae448;
+  --color-gsap-600: #09b83a;
+  --color-gsap-700: #07892c;
+  --color-gsap-800: #065c1e;
+  --color-gsap-900: #043d14;
+  --color-gsap-950: #02250b;
+}*/
