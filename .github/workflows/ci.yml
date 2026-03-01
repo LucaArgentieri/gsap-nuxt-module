@@ -13,6 +13,7 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bun run dev:prepare
+      - run: bun run lint:fix
       - run: bun run lint
       - run: bun run test
       - run: bun run test:types
