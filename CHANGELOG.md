@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.1.8
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.7...v1.1.8)
+
+### 🚀 Enhancements
+
+- Add useGsap context overload with auto-cleanup ([5a8cd71](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/5a8cd71))
+
+### ❤️ Contributors
+
+- Luca Argentieri <Lucaargentieri-98@hotmail.it>
+
 ## v1.1.7
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.5...v1.1.7)
