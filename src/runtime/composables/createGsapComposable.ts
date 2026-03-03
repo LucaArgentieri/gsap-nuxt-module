@@ -1,5 +1,6 @@
 import { gsap } from 'gsap'
 import { onMounted, onScopeDispose, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
 import { createGsapComposable } from '../create-gsap-composable'
 
@@ -9,6 +10,20 @@ export interface UseGsapOptions {
   scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>
   dependencies?: WatchSource | WatchSource[]
   revertOnUpdate?: boolean
+  /**
+   * When to revert the GSAP context during page navigation.
+   *
+   * - `'unmount'` (default) — reverts after the leave transition finishes,
+   *   when the component is unmounted. Equivalent to Vue's `onUnmounted`.
+   * - `'route-leave'` — reverts immediately when navigation is triggered,
+   *   **before** the leave transition plays. Use this when your animation
+   *   (e.g. horizontal scroll) would visually break during the exit animation.
+   *
+   * @example
+   * // Horizontal scroll that must die before the page-leave animation
+   * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
+   */
+  cleanupOn?: 'unmount' | 'route-leave'
 }
 
 /**
@@ -71,6 +86,13 @@ export function useGsap(
       ctx?.revert()
       runSetup()
     }, { flush: 'post' })
+  }
+
+  if (options?.cleanupOn === 'route-leave') {
+    onBeforeRouteLeave(() => {
+      ctx?.revert()
+      ctx = null
+    })
   }
 
   onScopeDispose(() => {
