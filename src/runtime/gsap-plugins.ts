@@ -2,7 +2,6 @@
  * This object contains lazy-loaded GSAP plugins for use in the application.
  *
  */
-import { loadDraggable, loadFlip, loadObserver } from './gsap-loaders'
 
 export const gsapPlugins = {
   // Scroll Plugins
@@ -22,10 +21,10 @@ export const gsapPlugins = {
   MotionPathHelper: () => import('gsap/MotionPathHelper').then(mod => mod.MotionPathHelper),
 
   // UI Plugins
-  Flip: () => loadFlip().then(mod => mod.Flip),
-  Draggable: () => loadDraggable().then(mod => mod.Draggable),
+  Flip: () => import('gsap/Flip').then(mod => mod.Flip),
+  Draggable: () => import('gsap/Draggable').then(mod => mod.Draggable),
   InertiaPlugin: () => import('gsap/InertiaPlugin').then(mod => mod.InertiaPlugin),
-  Observer: () => loadObserver().then(mod => mod.Observer),
+  Observer: () => import('gsap/Observer').then(mod => mod.Observer),
 
   // Other Plugins
   PixiPlugin: () => import('gsap/PixiPlugin').then(mod => mod.PixiPlugin),
