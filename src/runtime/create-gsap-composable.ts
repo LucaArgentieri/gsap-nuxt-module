@@ -4,7 +4,8 @@ import { useNuxtApp } from '#app'
  * Factory that creates a composable returning a registered GSAP plugin.
  *
  * The returned composable reads the plugin from `nuxtApp` at call time.
- * Returns `null` during SSR (plugin is client-only).
+ * This is a client-only composable — it is safe to call on the server but
+ * will return an inert value (the plugin is never registered server-side).
  * Throws on the client if the plugin was not enabled in `nuxt.config.ts`.
  *
  * **Cleanup is the caller's responsibility.**
@@ -17,9 +18,9 @@ import { useNuxtApp } from '#app'
 export function createGsapComposable<T>(
   pluginName: string,
   fallbackMessage?: string,
-): () => T | null {
+): () => T {
   return () => {
-    if (import.meta.server) return null
+    if (import.meta.server) return null as unknown as T
     const nuxtApp = useNuxtApp()
     const plugin = nuxtApp[`$${pluginName}`] as T | undefined
     if (!plugin) {
