@@ -19,6 +19,15 @@ export interface UseGsapOptions {
    *   **before** the leave transition plays. Use this when your animation
    *   (e.g. horizontal scroll) would visually break during the exit animation.
    *
+   * `onScopeDispose` is always registered as a safety fallback regardless of
+   * this option. When `'route-leave'` fires first it sets `ctx` to `null`,
+   * making the later `onScopeDispose` call a no-op.
+   *
+   * **Note:** if a `router.beforeEach` guard rejects navigation *after*
+   * `onBeforeRouteLeave` has fired, the context will have been reverted while
+   * the component is still mounted. Avoid placing critical navigation guards
+   * after route-leave hooks to prevent this edge case.
+   *
    * @example
    * // Horizontal scroll that must die before the page-leave animation
    * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
