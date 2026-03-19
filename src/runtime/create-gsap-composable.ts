@@ -18,11 +18,11 @@ import { useNuxtApp } from '#app'
 export function createGsapComposable<T>(
   pluginName: string,
   fallbackMessage?: string,
-): () => T {
+): () => NonNullable<T> {
   return () => {
-    if (import.meta.server) return null as unknown as T
+    if (import.meta.server) return null as unknown as NonNullable<T>
     const nuxtApp = useNuxtApp()
-    const plugin = nuxtApp[`$${pluginName}`] as T | undefined
+    const plugin = nuxtApp[`$${pluginName}`] as NonNullable<T> | undefined
     if (!plugin) {
       throw new Error(
         fallbackMessage || `[use${pluginName}] ${pluginName} is not registered! Did you enable it in nuxt.config.ts?`,

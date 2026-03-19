@@ -1,8 +1,10 @@
-<script setup>
+<script setup lang="ts">
+import type { SplitText as SplitTextInstance } from 'gsap/SplitText'
+
 const SplitText = useSplitText()
 const textRef = ref(null)
-let split = null
-let tween = null
+let split: SplitTextInstance | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   split = SplitText.create(textRef.value, { type: 'words, chars' })
