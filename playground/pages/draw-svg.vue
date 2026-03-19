@@ -1,6 +1,6 @@
-<script setup>
-let lineTween = null
-let circleTween = null
+<script setup lang="ts">
+let lineTween: gsap.core.Tween | null = null
+let circleTween: gsap.core.Tween | null = null
 
 onMounted(() => {
   lineTween = gsap.to('#lineSvg', {

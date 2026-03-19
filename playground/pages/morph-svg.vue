@@ -1,5 +1,5 @@
-<script setup>
-let tween = null
+<script setup lang="ts">
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.to('#circle', { duration: 1.5, morphSVG: '#hippo', repeat: -1, yoyo: true, repeatDelay: 0.2, ease: 'expo.inOut' })

@@ -1,6 +1,6 @@
-<script setup>
-const box = ref(null)
-let tween = null
+<script setup lang="ts">
+const box = ref<HTMLElement | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.fromTo(

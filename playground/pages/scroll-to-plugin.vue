@@ -1,12 +1,14 @@
-<script setup>
+<script setup lang="ts">
 // const ScrollToPlugin = useScrollToPlugin()
 
-const nuxtLogoRef = ref(null)
-const gsapLogoRef = ref(null)
-let tween = null
+type LogoComponentRef = { $el: HTMLElement }
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  tween = gsap.to(window, { duration: 2, scrollTo: gsapLogoRef.value.$el, repeat: -1, yoyo: true, ease: 'expo.inOut' })
+  tween = gsap.to(window, { duration: 2, scrollTo: gsapLogoRef.value!.$el, repeat: -1, yoyo: true, ease: 'expo.inOut' })
 
   // ScrollToPlugin.config({ autoKill: true })
 })

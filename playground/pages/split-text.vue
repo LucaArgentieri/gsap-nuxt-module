@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 const SplitText = useSplitText()
-const textRef = ref(null)
-let split = null
-let tween = null
+const textRef = ref<HTMLElement | null>(null)
+let split: { chars: Element[], revert: () => void } | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   split = SplitText.create(textRef.value, { type: 'words, chars' })

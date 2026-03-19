@@ -1,17 +1,19 @@
-<script setup>
+<script setup lang="ts">
+type LogoComponentRef = { $el: HTMLElement }
+
 const Observer = useObserver()
 
-const nuxtLogoRef = ref(null)
-const gsapLogoRef = ref(null)
-let observer = null
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let observer: { kill: () => void } | null = null
 
 const next = () => {
-  gsap.to(gsapLogoRef.value.$el, {
+  gsap.to(gsapLogoRef.value!.$el, {
     x: 0,
     y: 0,
     duration: 1,
   })
-  gsap.to(nuxtLogoRef.value.$el, {
+  gsap.to(nuxtLogoRef.value!.$el, {
     x: 100,
     y: 100,
     duration: 1,
@@ -19,12 +21,12 @@ const next = () => {
 }
 
 const previous = () => {
-  gsap.to(nuxtLogoRef.value.$el, {
+  gsap.to(nuxtLogoRef.value!.$el, {
     x: 0,
     y: 0,
     duration: 1,
   })
-  gsap.to(gsapLogoRef.value.$el, { x: 100, y: 100, duration: 1 })
+  gsap.to(gsapLogoRef.value!.$el, { x: 100, y: 100, duration: 1 })
 }
 
 onMounted(() => {

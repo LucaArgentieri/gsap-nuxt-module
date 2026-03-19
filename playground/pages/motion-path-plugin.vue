@@ -1,11 +1,13 @@
-<script setup>
-const nuxtLogoRef = ref(null)
+<script setup lang="ts">
+type LogoComponentRef = { $el: HTMLElement }
+
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
 const MotionPathHelper = useMotionPathHelper()
-let helper = null
-let tween = null
+let helper: { kill: () => void } | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  const nuxtLogo = nuxtLogoRef.value.$el
+  const nuxtLogo = nuxtLogoRef.value!.$el
   const path = [
     { x: -50, y: -50 },
     { x: -50, y: 50 },

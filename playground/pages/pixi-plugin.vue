@@ -1,16 +1,19 @@
-<script setup>
-const appRef = ref(null)
-let pixiApp = null
-let pixiTween = null
+<script setup lang="ts">
+const appRef = ref<HTMLElement | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pixiApp: any = null
+let pixiTween: gsap.core.Tween | null = null
 
 onMounted(() => {
   const script = document.createElement('script')
   script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js'
   script.onload = () => {
-    pixiApp = new window.PIXI.Application({ width: 800, height: 600 })
-    appRef.value.appendChild(pixiApp.view)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pixiApp = new (window as any).PIXI.Application({ width: 800, height: 600 })
+    appRef.value!.appendChild(pixiApp.view)
 
-    const graphics = new window.PIXI.Graphics()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const graphics = new (window as any).PIXI.Graphics()
     graphics.beginFill(0xDE3249)
     const pixiObject = graphics.drawRect(50, 50, 100, 100)
     graphics.endFill()

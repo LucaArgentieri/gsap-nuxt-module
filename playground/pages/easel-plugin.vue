@@ -1,14 +1,16 @@
-<script setup>
-const easelContainer = ref(null)
-let ticker = null
-let tween = null
+<script setup lang="ts">
+const easelContainer = ref<HTMLCanvasElement | null>(null)
+let ticker: (() => void) | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   const script = document.createElement('script')
   script.src = 'https://code.createjs.com/easeljs-0.8.2.min.js'
   script.onload = () => {
-    const stage = new window.createjs.Stage(easelContainer.value)
-    const circle = new window.createjs.Shape()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stage = new (window as any).createjs.Stage(easelContainer.value)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const circle = new (window as any).createjs.Shape()
     circle.graphics.beginFill('red').drawCircle(0, 0, 50)
     circle.x = circle.y = 100
     stage.addChild(circle)
