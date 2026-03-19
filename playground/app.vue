@@ -10,6 +10,7 @@ function onLeave(el: Element, done: () => void) {
 }
 
 function onEnter(el: Element, done: () => void) {
+  window.scrollTo(0, 0)
   gsap.fromTo(
     el,
     { opacity: 0 },
@@ -23,16 +24,21 @@ function onAfterEnter(el: Element) {
 </script>
 
 <template>
-  <Transition
-    :css="false"
-    mode="out-in"
-    @before-leave="onBeforeLeave"
-    @leave="onLeave"
-    @enter="onEnter"
-    @after-enter="onAfterEnter"
-  >
-    <NuxtPage />
-  </Transition>
+  <NuxtPage v-slot="{ Component, route }">
+    <Transition
+      :css="false"
+      mode="out-in"
+      @before-leave="onBeforeLeave"
+      @leave="onLeave"
+      @enter="onEnter"
+      @after-enter="onAfterEnter"
+    >
+      <component
+        :is="Component"
+        :key="route.path"
+      />
+    </Transition>
+  </NuxtPage>
 </template>
 
 <style>
