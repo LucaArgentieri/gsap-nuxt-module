@@ -36,6 +36,8 @@ onUnmounted(() => {
   helper?.kill()
   tween?.kill()
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

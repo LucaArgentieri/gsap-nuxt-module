@@ -42,6 +42,8 @@ onUnmounted(() => {
   observer?.kill()
   observer = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

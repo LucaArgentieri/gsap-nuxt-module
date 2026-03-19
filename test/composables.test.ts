@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createGsapComposable } from '../src/runtime/create-gsap-composable'
 
 // Mock #app to avoid Nuxt context requirement in unit tests
+const transitionFinishCallbacks: Array<() => void> = []
+
 vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
 }))
@@ -164,7 +166,8 @@ describe('useGsap cleanupOn option', () => {
     mountedCallbacks.length = 0
     disposeCallbacks.length = 0
     routeLeaveCallbacks.length = 0
-    vi.restoreAllMocks()
+    transitionFinishCallbacks.length = 0
+    vi.clearAllMocks()
   })
 
   it('does not register onBeforeRouteLeave by default', async () => {
@@ -177,8 +180,20 @@ describe('useGsap cleanupOn option', () => {
   })
 
   it('registers onBeforeRouteLeave when cleanupOn is route-leave', async () => {
+    const { useNuxtApp } = await import('#app')
     const { onBeforeRouteLeave } = await import('vue-router')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+
+    vi.mocked(useNuxtApp).mockReturnValue({
+      hooks: {
+        hook: vi.fn((event: string, cb: () => void) => {
+          if (event === 'page:transition:finish') {
+            transitionFinishCallbacks.push(cb)
+          }
+          return vi.fn()
+        }),
+      },
+    } as unknown as ReturnType<typeof useNuxtApp>)
 
     useGsap(() => {}, { cleanupOn: 'route-leave' })
 
@@ -186,8 +201,20 @@ describe('useGsap cleanupOn option', () => {
   })
 
   it('reverts context on route leave when cleanupOn is route-leave', async () => {
+    const { useNuxtApp } = await import('#app')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
+
+    vi.mocked(useNuxtApp).mockReturnValue({
+      hooks: {
+        hook: vi.fn((event: string, cb: () => void) => {
+          if (event === 'page:transition:finish') {
+            transitionFinishCallbacks.push(cb)
+          }
+          return vi.fn()
+        }),
+      },
+    } as unknown as ReturnType<typeof useNuxtApp>)
 
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue({
@@ -201,13 +228,28 @@ describe('useGsap cleanupOn option', () => {
     mountedCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
 
+    // Simulate route leave
     routeLeaveCallbacks.forEach(cb => cb())
+    // Then simulate the page:transition:finish hook
+    transitionFinishCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
   it('still reverts on scope dispose when cleanupOn is route-leave (safety fallback)', async () => {
+    const { useNuxtApp } = await import('#app')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
+
+    vi.mocked(useNuxtApp).mockReturnValue({
+      hooks: {
+        hook: vi.fn((event: string, cb: () => void) => {
+          if (event === 'page:transition:finish') {
+            transitionFinishCallbacks.push(cb)
+          }
+          return vi.fn()
+        }),
+      },
+    } as unknown as ReturnType<typeof useNuxtApp>)
 
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue({
@@ -220,8 +262,9 @@ describe('useGsap cleanupOn option', () => {
     useGsap(() => {}, { cleanupOn: 'route-leave' })
     mountedCallbacks.forEach(cb => cb())
 
-    // Simulate route leave first (sets ctx to null)
+    // Simulate route leave first, then page:transition:finish (sets ctx to null)
     routeLeaveCallbacks.forEach(cb => cb())
+    transitionFinishCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
 
     // Scope dispose after — revert should NOT be called again (ctx is null)

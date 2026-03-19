@@ -30,6 +30,8 @@ onUnmounted(() => {
   animation?.kill()
   animation = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

@@ -19,6 +19,8 @@ onUnmounted(() => {
   smoother?.kill()
   smoother = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

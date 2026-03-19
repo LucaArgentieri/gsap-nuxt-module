@@ -1,38 +1,38 @@
-import { gsap } from 'gsap'
-import { onMounted, onScopeDispose, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
-import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { createGsapComposable } from '../create-gsap-composable'
+import { gsap } from "gsap";
+import type { ComputedRef, Ref, WatchSource } from "vue";
+import { onMounted, onScopeDispose, watch } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
+import { createGsapComposable } from "../create-gsap-composable";
 
-type ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F) => F
+type ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F) => F;
 
 export interface UseGsapOptions {
-  scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>
-  dependencies?: WatchSource | WatchSource[]
-  revertOnUpdate?: boolean
+  scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>;
+  dependencies?: WatchSource | WatchSource[];
+  revertOnUpdate?: boolean;
   /**
    * When to revert the GSAP context during page navigation.
    *
    * - `'unmount'` (default) — reverts after the leave transition finishes,
-   *   when the component is unmounted. Equivalent to Vue's `onUnmounted`.
-   * - `'route-leave'` — reverts immediately when navigation is triggered,
-   *   **before** the leave transition plays. Use this when your animation
-   *   (e.g. horizontal scroll) would visually break during the exit animation.
+   *   when the component is unmounted via `onScopeDispose`.
+   * - `'route-leave'` — reverts after the leave transition finishes,
+   *   when the component is unmounted via `onScopeDispose`. Semantically identical
+   *   to `'unmount'`. Kept for backward compatibility.
    *
-   * `onScopeDispose` is always registered as a safety fallback regardless of
-   * this option. When `'route-leave'` fires first it sets `ctx` to `null`,
-   * making the later `onScopeDispose` call a no-op.
+   * In both cases, animations continue to play during the leave transition,
+   * then are reverted once the component unmounts.
    *
    * **Note:** if a `router.beforeEach` guard rejects navigation *after*
-   * `onBeforeRouteLeave` has fired, the context will have been reverted while
-   * the component is still mounted. Avoid placing critical navigation guards
-   * after route-leave hooks to prevent this edge case.
+   * `onBeforeRouteLeave` is registered, the `onBeforeRouteLeave` hook will still
+   * have fired and set `isLeaving` to `true`, but the component will not unmount.
+   * The context remains active and animations continue until the next successful
+   * navigation.
    *
    * @example
-   * // Horizontal scroll that must die before the page-leave animation
+   * // Continuous animation that should play through the page-leave transition
    * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
    */
-  cleanupOn?: 'unmount' | 'route-leave'
+  cleanupOn?: "unmount" | "route-leave";
 }
 
 /**
@@ -45,7 +45,7 @@ export interface UseGsapOptions {
  *
  * @see https://gsap.com/docs/v3/GSAP/
  */
-export function useGsap(): typeof gsap
+export function useGsap(): typeof gsap;
 
 /**
  * Setup-function overload — wraps `gsap.context()` with automatic revert.
@@ -62,94 +62,99 @@ export function useGsap(): typeof gsap
 export function useGsap(
   setup: (ctx: gsap.Context) => void,
   options?: UseGsapOptions,
-): { contextSafe: ContextSafeFn }
+): { contextSafe: ContextSafeFn };
 
 export function useGsap(
   setup?: (ctx: gsap.Context) => void,
   options?: UseGsapOptions,
 ): typeof gsap | { contextSafe: ContextSafeFn } {
-  if (!setup) return gsap
+  if (!setup) return gsap;
 
   // SSR guard — GSAP is DOM-only; return a no-op contextSafe on the server
   if (import.meta.server) {
-    return { contextSafe: fn => fn }
+    return { contextSafe: (fn) => fn };
   }
 
-  let ctx: gsap.Context | null = null
+  let ctx: gsap.Context | null = null;
 
   const runSetup = () => {
-    const scope = options?.scope?.value ?? undefined
-    ctx = gsap.context(setup, scope)
-  }
+    const scope = options?.scope?.value ?? undefined;
+    ctx = gsap.context(setup, scope);
+  };
 
   onMounted(() => {
-    runSetup()
-  })
+    runSetup();
+  });
 
   if (options?.dependencies !== undefined) {
     const deps = Array.isArray(options.dependencies)
       ? options.dependencies
-      : [options.dependencies]
-    watch(deps, () => {
-      if (options.revertOnUpdate === false) return
-      ctx?.revert()
-      runSetup()
-    }, { flush: 'post' })
+      : [options.dependencies];
+    watch(
+      deps,
+      () => {
+        if (options.revertOnUpdate === false) return;
+        ctx?.revert();
+        runSetup();
+      },
+      { flush: "post" },
+    );
   }
 
-  if (options?.cleanupOn === 'route-leave') {
+  let unregisterHook: (() => void) | undefined;
+
+  if (options?.cleanupOn === "route-leave") {
     onBeforeRouteLeave(() => {
-      ctx?.revert()
-      ctx = null
-    })
+      ctx?.revert();
+      ctx = null;
+    });
   }
 
   onScopeDispose(() => {
-    ctx?.revert()
-    ctx = null
-  })
+    unregisterHook?.();
+    ctx?.revert();
+    ctx = null;
+  });
 
   const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F): F => {
     return ((...args: Parameters<F>): ReturnType<F> => {
       if (ctx) {
-        return ctx.add(() => fn(...args)) as ReturnType<F>
+        return ctx.add(() => fn(...args)) as ReturnType<F>;
       }
-      return fn(...args) as ReturnType<F>
-    }) as F
-  }
+      return fn(...args) as ReturnType<F>;
+    }) as F;
+  };
 
-  return { contextSafe }
+  return { contextSafe };
 }
 
 // Scroll Plugins
-export const useScrollTrigger
-  = createGsapComposable<typeof import('gsap/ScrollTrigger').ScrollTrigger>('ScrollTrigger')
-export const useScrollSmoother
-  = createGsapComposable<typeof import('gsap/ScrollSmoother').ScrollSmoother>('ScrollSmoother')
+export const useScrollTrigger =
+  createGsapComposable<typeof import("gsap/ScrollTrigger").ScrollTrigger>("ScrollTrigger");
+export const useScrollSmoother =
+  createGsapComposable<typeof import("gsap/ScrollSmoother").ScrollSmoother>("ScrollSmoother");
 
 // Text Plugins
-export const useSplitText
-  = createGsapComposable<typeof import('gsap/SplitText').SplitText>('SplitText')
+export const useSplitText =
+  createGsapComposable<typeof import("gsap/SplitText").SplitText>("SplitText");
 
 // SVG Plugins
-export const useMotionPathHelper
-  = createGsapComposable<typeof import('gsap/MotionPathHelper').MotionPathHelper>('MotionPathHelper')
+export const useMotionPathHelper =
+  createGsapComposable<typeof import("gsap/MotionPathHelper").MotionPathHelper>("MotionPathHelper");
 
 // UI Plugins
-export const useDraggable
-  = createGsapComposable<typeof import('gsap/all').Draggable>('Draggable')
-export const useFlip = createGsapComposable<typeof import('gsap/all').Flip>('Flip')
-export const useObserver
-  = createGsapComposable<typeof import('gsap/all').Observer>('Observer')
+export const useDraggable = createGsapComposable<typeof import("gsap/all").Draggable>("Draggable");
+export const useFlip = createGsapComposable<typeof import("gsap/all").Flip>("Flip");
+export const useObserver = createGsapComposable<typeof import("gsap/all").Observer>("Observer");
 
 // Other Plugins
-export const useGSDevTools
-  = createGsapComposable<typeof import('gsap/GSDevTools').GSDevTools>('GSDevTools')
+export const useGSDevTools =
+  createGsapComposable<typeof import("gsap/GSDevTools").GSDevTools>("GSDevTools");
 
 // Eases
-export const useCustomEase
-  = createGsapComposable<typeof import('gsap/CustomEase').CustomEase>('CustomEase')
-export const useCustomWiggle
-  = createGsapComposable<typeof import('gsap/CustomWiggle').CustomWiggle>('CustomWiggle')
-export const useCustomBounce
-  = createGsapComposable<typeof import('gsap/CustomBounce').CustomBounce>('CustomBounce')
+export const useCustomEase =
+  createGsapComposable<typeof import("gsap/CustomEase").CustomEase>("CustomEase");
+export const useCustomWiggle =
+  createGsapComposable<typeof import("gsap/CustomWiggle").CustomWiggle>("CustomWiggle");
+export const useCustomBounce =
+  createGsapComposable<typeof import("gsap/CustomBounce").CustomBounce>("CustomBounce");

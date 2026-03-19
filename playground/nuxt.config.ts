@@ -1,6 +1,9 @@
 export default defineNuxtConfig({
   modules: ['../src/module'],
   devtools: { enabled: false },
+  app: {
+    pageTransition: { mode: 'out-in', css: false },
+  },
   compatibilityDate: '2025-02-26',
   gsap: {
     plugins: [

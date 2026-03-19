@@ -36,6 +36,8 @@ onUnmounted(() => {
   ticker = null
   tween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

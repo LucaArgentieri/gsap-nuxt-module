@@ -1,53 +1,54 @@
 <script setup lang="ts">
-const gsap = useGsap()
-const containerA = ref<HTMLDivElement | null>(null)
-const containerB = ref<HTMLDivElement | null>(null)
+const gsap = useGsap();
+const containerA = ref<HTMLDivElement | null>(null);
+const containerB = ref<HTMLDivElement | null>(null);
 
 useGsap(
   () => {
-    gsap.to('.box-a', {
+    gsap.to(".box-a", {
       y: -40,
       duration: 0.6,
-      ease: 'power1.inOut',
+      ease: "power1.inOut",
       repeat: -1,
       yoyo: true,
       stagger: 0.15,
-    })
+    });
   },
-  { scope: containerA, cleanupOn: 'route-leave' },
-)
+  { scope: containerA, cleanupOn: "route-leave" },
+);
 
 useGsap(
   () => {
-    gsap.to('.box-b', {
+    gsap.to(".box-b", {
       y: -40,
       duration: 0.6,
-      ease: 'power1.inOut',
+      ease: "power1.inOut",
       repeat: -1,
       yoyo: true,
       stagger: 0.15,
-    })
+    });
   },
   { scope: containerB },
-)
+);
+
+definePageMeta({
+  pageTransition: pageTransition,
+});
 </script>
 
 <template>
   <div class="page-container">
     <header>
       <h1>Page Transition + Cleanup Strategies</h1>
-      <p>Navigate away to see the difference between cleanup strategies during the fade-out.</p>
+      <p>Navigate away to see both cleanup strategies in action during the page transition.</p>
     </header>
 
     <div class="columns">
-      <section
-        ref="containerA"
-        class="column"
-      >
+      <section ref="containerA" class="column">
         <h2>cleanupOn: 'route-leave'</h2>
         <p>
-          Reverts via <code>onBeforeRouteLeave</code> — boxes snap to rest
-          <strong>before</strong> the fade-out starts.
+          Reverts via <code>onScopeDispose</code> after the leave transition finishes —
+          boxes keep bouncing <strong>through</strong> the fade-out, then stop when the component unmounts.
         </p>
         <div class="boxes">
           <div class="box box-a" />
@@ -56,14 +57,11 @@ useGsap(
         </div>
       </section>
 
-      <section
-        ref="containerB"
-        class="column"
-      >
+      <section ref="containerB" class="column">
         <h2>cleanupOn: 'unmount' (default)</h2>
         <p>
           Reverts via <code>onScopeDispose</code> — boxes keep bouncing <strong>through</strong> the
-          fade-out.
+          fade-out, then stop when the component unmounts.
         </p>
         <div class="boxes">
           <div class="box box-b" />

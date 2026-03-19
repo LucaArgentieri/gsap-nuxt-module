@@ -35,6 +35,8 @@ onUnmounted(() => {
   pixiTween = null
   pixiApp = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

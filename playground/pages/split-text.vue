@@ -22,6 +22,8 @@ onUnmounted(() => {
   tween = null
   split = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

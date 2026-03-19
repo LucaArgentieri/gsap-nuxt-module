@@ -33,6 +33,8 @@ onUnmounted(() => {
   bounceTween = null
   squashTween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

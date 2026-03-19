@@ -25,6 +25,8 @@ onUnmounted(() => {
   lineTween = null
   circleTween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>
