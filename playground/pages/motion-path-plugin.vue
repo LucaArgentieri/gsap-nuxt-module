@@ -1,11 +1,15 @@
-<script setup>
-const nuxtLogoRef = ref(null)
+<script setup lang="ts">
+import type { MotionPathHelper as MotionPathHelperInstance } from 'gsap/MotionPathHelper'
+
+type ComponentRef = { $el: HTMLElement }
+
+const nuxtLogoRef = ref<ComponentRef | null>(null)
 const MotionPathHelper = useMotionPathHelper()
-let helper = null
-let tween = null
+let helper: MotionPathHelperInstance | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  const nuxtLogo = nuxtLogoRef.value.$el
+  const nuxtLogo = nuxtLogoRef.value!.$el
   const path = [
     { x: -50, y: -50 },
     { x: -50, y: 50 },
@@ -27,7 +31,8 @@ onMounted(() => {
     ease: 'linear',
   })
 
-  helper = MotionPathHelper?.create(tween)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  helper = MotionPathHelper.create(tween as any)
 })
 
 onUnmounted(() => {

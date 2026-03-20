@@ -1,11 +1,15 @@
-<script setup>
+<script setup lang="ts">
+import type { Draggable as DraggableInstance } from 'gsap/Draggable'
+
+type ComponentRef = { $el: HTMLElement }
+
 const Draggable = useDraggable()
 
-const nuxtLogoRef = ref(null)
-let draggables = []
+const nuxtLogoRef = ref<ComponentRef | null>(null)
+let draggables: DraggableInstance[] = []
 
 onMounted(() => {
-  draggables = Draggable.create(nuxtLogoRef.value.$el)
+  draggables = Draggable.create(nuxtLogoRef.value!.$el)
 })
 
 onUnmounted(() => {
