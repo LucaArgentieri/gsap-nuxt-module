@@ -1,7 +1,7 @@
+import { useNuxtApp } from "#app";
 import { gsap } from "gsap";
 import type { ComputedRef, Ref, WatchSource } from "vue";
 import { onMounted, onScopeDispose, watch } from "vue";
-import { onBeforeRouteLeave } from "vue-router";
 import { createGsapComposable } from "../create-gsap-composable";
 
 type ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F) => F;
@@ -84,6 +84,13 @@ export function useGsap(
 
   onMounted(() => {
     runSetup();
+    if (options?.cleanupOn === "route-leave") {
+      const nuxtApp = useNuxtApp();
+      nuxtApp.hooks.hookOnce("page:transition:finish", () => {
+        ctx?.revert();
+        ctx = null;
+      });
+    }
   });
 
   if (options?.dependencies !== undefined) {
@@ -101,19 +108,11 @@ export function useGsap(
     );
   }
 
-  let unregisterHook: (() => void) | undefined;
-
-  if (options?.cleanupOn === "route-leave") {
-    onBeforeRouteLeave(() => {
+  onScopeDispose(() => {
+    if (options?.cleanupOn === "unmount") {
       ctx?.revert();
       ctx = null;
-    });
-  }
-
-  onScopeDispose(() => {
-    unregisterHook?.();
-    ctx?.revert();
-    ctx = null;
+    }
   });
 
   const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F): F => {
