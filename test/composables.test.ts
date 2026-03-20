@@ -13,6 +13,7 @@ vi.mock('#app', () => ({
 const mountedCallbacks: Array<() => void> = []
 const disposeCallbacks: Array<() => void> = []
 const routeLeaveCallbacks: Array<() => void> = []
+const watchCallbacks: Array<() => void> = []
 
 vi.mock('vue', async () => {
   const actual = await vi.importActual<typeof import('vue')>('vue')
@@ -20,7 +21,7 @@ vi.mock('vue', async () => {
     ...actual,
     onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
     onScopeDispose: vi.fn((cb: () => void) => { disposeCallbacks.push(cb) }),
-    watch: vi.fn(),
+    watch: vi.fn((_sources: unknown, cb: () => void) => { watchCallbacks.push(cb) }),
   }
 })
 
@@ -342,5 +343,67 @@ describe('useGsap cleanupOn option', () => {
     // Scope dispose after — revert should NOT be called again (ctx is null)
     disposeCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
+  })
+})
+
+describe('useGsap options', () => {
+  beforeEach(() => {
+    mountedCallbacks.length = 0
+    disposeCallbacks.length = 0
+    watchCallbacks.length = 0
+    vi.restoreAllMocks()
+  })
+
+  it('registers a watcher when dependencies option is provided', async () => {
+    const { watch } = await import('vue')
+    const { ref } = await import('vue')
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+
+    const dep = ref(0)
+    useGsap(() => {}, { dependencies: dep })
+
+    expect(watch).toHaveBeenCalledOnce()
+  })
+
+  it('does not revert context on dependency update when revertOnUpdate is false', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    const { ref } = await import('vue')
+
+    const revertSpy = vi.fn()
+    vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: revertSpy,
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
+
+    const dep = ref(0)
+    useGsap(() => {}, { dependencies: dep, revertOnUpdate: false })
+    mountedCallbacks.forEach(cb => cb())
+
+    // Trigger the watch callback — revert must NOT be called
+    watchCallbacks.forEach(cb => cb())
+    expect(revertSpy).not.toHaveBeenCalled()
+  })
+
+  it('passes scope element to gsap.context when scope option is provided', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    const { ref } = await import('vue')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: vi.fn(),
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
+
+    const el = {} as HTMLElement
+    const scopeRef = ref<HTMLElement | null>(el)
+    useGsap(() => {}, { scope: scopeRef })
+    mountedCallbacks.forEach(cb => cb())
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), el)
   })
 })

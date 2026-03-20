@@ -5,7 +5,14 @@ import { onMounted, onScopeDispose, watch } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { createGsapComposable } from "../create-gsap-composable";
 
-type ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F) => F;
+/**
+ * Wraps an event handler so it runs inside the active GSAP context.
+ *
+ * **Note:** return values are discarded when a context exists — `ctx.add()`
+ * returns `void`. Use `contextSafe` only for void side-effect handlers
+ * (DOM events, pointer callbacks, etc.).
+ */
+type ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F) => F;
 
 export interface UseGsapOptions {
   scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>;
@@ -14,11 +21,14 @@ export interface UseGsapOptions {
   /**
    * When to revert the GSAP context during page navigation.
    *
+   * @deprecated This option has no behavioral effect. Both `'unmount'` and
+   * `'route-leave'` produce identical behavior: the GSAP context is reverted
+   * after the leave transition finishes, when the component unmounts via
+   * `onScopeDispose`. Kept for backward compatibility only.
+   *
    * - `'unmount'` (default) — reverts after the leave transition finishes,
    *   when the component is unmounted via `onScopeDispose`.
-   * - `'route-leave'` — reverts after the leave transition finishes,
-   *   when the component is unmounted via `onScopeDispose`. Semantically identical
-   *   to `'unmount'`. Kept for backward compatibility.
+   * - `'route-leave'` — semantically identical to `'unmount'`.
    *
    * In both cases, animations continue to play during the leave transition,
    * then are reverted once the component unmounts.
@@ -119,12 +129,14 @@ export function useGsap(
     }
   });
 
-  const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F): F => {
-    return ((...args: Parameters<F>): ReturnType<F> => {
+  const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F): F => {
+    return ((...args: Parameters<F>): void => {
       if (ctx) {
-        return ctx.add(() => fn(...args)) as ReturnType<F>;
+        ctx.add(() => fn(...args));
       }
-      return fn(...args) as ReturnType<F>;
+      else {
+        fn(...args);
+      }
     }) as F;
   };
 
