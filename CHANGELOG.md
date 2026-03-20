@@ -1,6 +1,38 @@
 # Changelog
 
 
+## v1.1.9
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.8...v1.1.9)
+
+### 🚀 Enhancements
+
+- **useGsap:** Add cleanupOn option for early GSAP cleanup before page transitions ([2d261b3](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/2d261b3))
+
+### 🩹 Fixes
+
+- **types:** Remove false-positive null from plugin composable return type ([1aba076](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/1aba076))
+- **app.vue:** Wrap NuxtPage in v-slot to fix Transition warning ([1cb0056](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/1cb0056))
+- Resolve TypeScript null warnings in GSAP composables ([d8d4f3d](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/d8d4f3d))
+- **types:** Suppress TS1149 casing errors from GSAP package ([f930a7b](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/f930a7b))
+
+### 💅 Refactors
+
+- **runtime:** Inline Flip/Draggable/Observer loaders, remove gsap-loaders.js ([16660e1](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/16660e1))
+
+### 📖 Documentation
+
+- **useGsap:** Document cleanupOn edge case for navigation guard rejection ([500d473](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/500d473))
+
+### 🏡 Chore
+
+- **playground:** Convert pages to TypeScript and fix scroll behavior ([34d7922](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/34d7922))
+
+### ❤️ Contributors
+
+- Luca Argentieri <Lucaargentieri-98@hotmail.it>
+- Claude <noreply@anthropic.com>
+
 ## v1.1.8
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.7...v1.1.8)
