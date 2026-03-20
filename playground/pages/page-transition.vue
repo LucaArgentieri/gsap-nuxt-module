@@ -47,8 +47,8 @@ definePageMeta({
       <section ref="containerA" class="column">
         <h2>cleanupOn: 'route-leave'</h2>
         <p>
-          Reverts via <code>onScopeDispose</code> after the leave transition finishes —
-          boxes keep bouncing <strong>through</strong> the fade-out, then stop when the component unmounts.
+          Reverts via <code>onScopeDispose</code> after the leave transition finishes — boxes keep
+          bouncing <strong>through</strong> the fade-out, then stop when the component unmounts.
         </p>
         <div class="boxes">
           <div class="box box-a" />

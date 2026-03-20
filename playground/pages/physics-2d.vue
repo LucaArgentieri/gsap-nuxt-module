@@ -1,14 +1,14 @@
 <script setup lang="ts">
 type LogoComponentRef = {
-  $el: HTMLElement
-}
+  $el: HTMLElement;
+};
 
-const nuxtLogoRef = ref<LogoComponentRef | null>(null)
-const gsapLogoRef = ref<LogoComponentRef | null>(null)
-let tween: ReturnType<typeof gsap.to> | null = null
+const nuxtLogoRef = ref<LogoComponentRef | null>(null);
+const gsapLogoRef = ref<LogoComponentRef | null>(null);
+let tween: ReturnType<typeof gsap.to> | null = null;
 
 onMounted(() => {
-  if (!nuxtLogoRef.value || !gsapLogoRef.value) return
+  if (!nuxtLogoRef.value || !gsapLogoRef.value) return;
 
   tween = gsap.to([nuxtLogoRef.value.$el, gsapLogoRef.value.$el], {
     duration: 2,
@@ -18,15 +18,15 @@ onMounted(() => {
       x: { velocity: 100, acceleration: 200 },
       y: { velocity: -200, friction: 0.1 },
     },
-  })
-})
+  });
+});
 
 onUnmounted(() => {
-  tween?.kill()
-  tween = null
-})
+  tween?.kill();
+  tween = null;
+});
 
-definePageMeta({ pageTransition })
+definePageMeta({ pageTransition });
 </script>
 
 <template>
@@ -38,12 +38,12 @@ definePageMeta({ pageTransition })
 
 <style scoped>
 main {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    height: 100svh;
-    overflow: hidden;
-    overscroll-behavior: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 </style>
