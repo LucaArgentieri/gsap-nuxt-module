@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { MotionPathHelper as MotionPathHelperInstance } from 'gsap/MotionPathHelper'
 
-type ComponentRef = { $el: HTMLElement }
+type LogoComponentRef = { $el: HTMLElement }
 
-const nuxtLogoRef = ref<ComponentRef | null>(null)
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
 const MotionPathHelper = useMotionPathHelper()
 let helper: MotionPathHelperInstance | null = null
 let tween: gsap.core.Tween | null = null
@@ -39,6 +39,8 @@ onUnmounted(() => {
   helper?.kill()
   tween?.kill()
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

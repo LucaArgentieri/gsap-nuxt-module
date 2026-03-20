@@ -29,6 +29,8 @@ onUnmounted(() => {
   draggables.forEach(instance => instance.kill())
   draggables = []
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

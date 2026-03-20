@@ -50,6 +50,8 @@ const handleClick = contextSafe(() => {
     overwrite: true,
   })
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

@@ -39,6 +39,8 @@ onUnmounted(() => {
   nuxtTween = null
   gsapTween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

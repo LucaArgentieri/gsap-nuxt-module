@@ -14,6 +14,8 @@ onUnmounted(() => {
   tl?.kill()
   tl = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

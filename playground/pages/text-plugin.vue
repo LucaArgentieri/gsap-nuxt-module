@@ -1,6 +1,6 @@
-<script setup>
-const textRef = ref(null)
-let tween = null
+<script setup lang="ts">
+const textRef = ref<HTMLElement | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.to(textRef.value, {
@@ -18,6 +18,8 @@ onUnmounted(() => {
   tween?.kill()
   tween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

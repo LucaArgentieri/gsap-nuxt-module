@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import type { SplitText as SplitTextInstance } from 'gsap/SplitText'
-
 const SplitText = useSplitText()
-const textRef = ref(null)
-let split: SplitTextInstance | null = null
+const textRef = ref<HTMLElement | null>(null)
+let split: { chars: Element[], revert: () => void } | null = null
 let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
@@ -24,6 +22,8 @@ onUnmounted(() => {
   tween = null
   split = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

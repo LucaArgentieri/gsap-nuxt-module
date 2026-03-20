@@ -1,6 +1,6 @@
-<script setup>
-let lineTween = null
-let circleTween = null
+<script setup lang="ts">
+let lineTween: gsap.core.Tween | null = null
+let circleTween: gsap.core.Tween | null = null
 
 onMounted(() => {
   lineTween = gsap.to('#lineSvg', {
@@ -25,6 +25,8 @@ onUnmounted(() => {
   lineTween = null
   circleTween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

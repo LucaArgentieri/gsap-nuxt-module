@@ -57,6 +57,8 @@ onUnmounted(() => {
   animations.forEach(animation => animation.kill())
   animations = []
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

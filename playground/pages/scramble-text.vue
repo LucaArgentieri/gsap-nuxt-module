@@ -1,10 +1,9 @@
-<script setup>
-const textRef = ref(null)
-let tween = null
+<script setup lang="ts">
+const textRef = ref<HTMLElement | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.to(textRef.value, {
-    duration: 1,
     scrambleText: 'THIS IS NEW TEXT',
     ease: 'expo.inOut',
     duration: 5,
@@ -15,6 +14,8 @@ onUnmounted(() => {
   tween?.kill()
   tween = null
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Draggable as DraggableInstance } from 'gsap/Draggable'
+import type { Draggable as DraggablePlugin } from 'gsap/all'
 
-type ComponentRef = { $el: HTMLElement }
+type LogoComponentRef = { $el: HTMLElement }
 
 const Draggable = useDraggable()
 
-const nuxtLogoRef = ref<ComponentRef | null>(null)
-let draggables: DraggableInstance[] = []
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+let draggables: DraggablePlugin[] = []
 
 onMounted(() => {
   draggables = Draggable.create(nuxtLogoRef.value!.$el)
@@ -16,6 +16,8 @@ onUnmounted(() => {
   draggables.forEach(instance => instance.kill())
   draggables = []
 })
+
+definePageMeta({ pageTransition })
 </script>
 
 <template>
