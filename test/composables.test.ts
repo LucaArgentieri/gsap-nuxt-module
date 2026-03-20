@@ -186,7 +186,7 @@ describe('useGsap cleanupOn option', () => {
 
     vi.mocked(useNuxtApp).mockReturnValue({
       hooks: {
-        hook: vi.fn((event: string, cb: () => void) => {
+        hookOnce: vi.fn((event: string, cb: () => void) => {
           if (event === 'page:transition:finish') {
             transitionFinishCallbacks.push(cb)
           }
@@ -207,7 +207,7 @@ describe('useGsap cleanupOn option', () => {
 
     vi.mocked(useNuxtApp).mockReturnValue({
       hooks: {
-        hook: vi.fn((event: string, cb: () => void) => {
+        hookOnce: vi.fn((event: string, cb: () => void) => {
           if (event === 'page:transition:finish') {
             transitionFinishCallbacks.push(cb)
           }
@@ -242,7 +242,7 @@ describe('useGsap cleanupOn option', () => {
 
     vi.mocked(useNuxtApp).mockReturnValue({
       hooks: {
-        hook: vi.fn((event: string, cb: () => void) => {
+        hookOnce: vi.fn((event: string, cb: () => void) => {
           if (event === 'page:transition:finish') {
             transitionFinishCallbacks.push(cb)
           }
@@ -275,7 +275,7 @@ describe('useGsap cleanupOn option', () => {
 
     vi.mocked(useNuxtApp).mockReturnValue({
       hooks: {
-        hook: vi.fn((event: string, cb: () => void) => {
+        hookOnce: vi.fn((event: string, cb: () => void) => {
           if (event === 'page:transition:finish') {
             transitionFinishCallbacks.push(cb)
           }
@@ -314,7 +314,7 @@ describe('useGsap cleanupOn option', () => {
 
     vi.mocked(useNuxtApp).mockReturnValue({
       hooks: {
-        hook: vi.fn((event: string, cb: () => void) => {
+        hookOnce: vi.fn((event: string, cb: () => void) => {
           if (event === 'page:transition:finish') {
             transitionFinishCallbacks.push(cb)
           }

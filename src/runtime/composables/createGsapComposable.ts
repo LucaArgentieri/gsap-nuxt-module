@@ -2,6 +2,7 @@ import { useNuxtApp } from "#app";
 import { gsap } from "gsap";
 import type { ComputedRef, Ref, WatchSource } from "vue";
 import { onMounted, onScopeDispose, watch } from "vue";
+import { onBeforeRouteLeave } from "vue-router";
 import { createGsapComposable } from "../create-gsap-composable";
 
 type ContextSafeFn = <F extends (...args: unknown[]) => unknown>(fn: F) => F;
@@ -24,7 +25,7 @@ export interface UseGsapOptions {
    *
    * **Note:** if a `router.beforeEach` guard rejects navigation *after*
    * `onBeforeRouteLeave` is registered, the `onBeforeRouteLeave` hook will still
-   * have fired and set `isLeaving` to `true`, but the component will not unmount.
+   * have fired and set `isLeavingViaRoute` to `true`, but the component will not unmount.
    * The context remains active and animations continue until the next successful
    * navigation.
    *
@@ -76,21 +77,24 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null;
+  let isLeavingViaRoute = false;
 
   const runSetup = () => {
     const scope = options?.scope?.value ?? undefined;
     ctx = gsap.context(setup, scope);
   };
 
+  onBeforeRouteLeave(() => {
+    isLeavingViaRoute = true;
+    const nuxtApp = useNuxtApp();
+    nuxtApp.hooks.hookOnce("page:transition:finish", () => {
+      ctx?.revert();
+      ctx = null;
+    });
+  });
+
   onMounted(() => {
     runSetup();
-    if (options?.cleanupOn === "route-leave") {
-      const nuxtApp = useNuxtApp();
-      nuxtApp.hooks.hookOnce("page:transition:finish", () => {
-        ctx?.revert();
-        ctx = null;
-      });
-    }
   });
 
   if (options?.dependencies !== undefined) {
@@ -109,7 +113,7 @@ export function useGsap(
   }
 
   onScopeDispose(() => {
-    if (options?.cleanupOn === "unmount") {
+    if (!isLeavingViaRoute) {
       ctx?.revert();
       ctx = null;
     }

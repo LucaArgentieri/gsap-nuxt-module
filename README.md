@@ -120,6 +120,31 @@ onMounted(() => {
 </script>
 ```
 
+### Context form (recommended)
+
+Pass a `setup` function to wrap animations in a [`gsap.context()`](https://gsap.com/docs/v3/GSAP/gsap.context/).
+The context reverts automatically when the component unmounts — no `onUnmounted` boilerplate needed.
+During page navigation, cleanup is deferred until after the leave transition finishes.
+
+```ts
+<script setup lang="ts">
+const containerRef = ref<HTMLElement | null>(null)
+
+useGsap(() => {
+  gsap.from('.box', { opacity: 0, y: 30, duration: 0.6 })
+}, { scope: containerRef })
+</script>
+
+<template>
+  <div ref="containerRef">
+    <div class="box">I animate in safely</div>
+  </div>
+</template>
+```
+
+Returns `{ contextSafe }` for wrapping event handlers that add animations after mount.
+See the [full docs](https://lucaargentieri.github.io/gsap-nuxt-module/composables/use-gsap) for all options.
+
 ## Available composables
 
 | Composable | Plugin | `nuxt.config.ts` key |
@@ -154,8 +179,7 @@ export default defineNuxtConfig({
 
 ## Cleanup
 
-GSAP animations are not automatically cleaned up when a component unmounts.
-Use `onUnmounted` to prevent memory leaks.
+When using `useGsap()` with a setup function, cleanup is automatic. When using the zero-arg form, use `onUnmounted` to prevent memory leaks.
 
 Plugin registration is handled once by the module at app startup — never call `gsap.registerPlugin()` manually.
 In components, clean up only the instances your component created (tweens, timelines, ScrollTrigger instances, Draggable instances, etc.).
