@@ -1,47 +1,50 @@
 <script setup lang="ts">
-const easelContainer = ref<HTMLCanvasElement | null>(null);
-let ticker: (() => void) | null = null;
-let tween: gsap.core.Tween | null = null;
+const easelContainer = ref<HTMLCanvasElement | null>(null)
+let ticker: (() => void) | null = null
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  const script = document.createElement("script");
-  script.src = "https://code.createjs.com/easeljs-0.8.2.min.js";
+  const script = document.createElement('script')
+  script.src = 'https://code.createjs.com/easeljs-0.8.2.min.js'
   script.onload = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stage = new (window as any).createjs.Stage(easelContainer.value);
+    const stage = new (window as any).createjs.Stage(easelContainer.value)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const circle = new (window as any).createjs.Shape();
-    circle.graphics.beginFill("red").drawCircle(0, 0, 50);
-    circle.x = circle.y = 100;
-    stage.addChild(circle);
+    const circle = new (window as any).createjs.Shape()
+    circle.graphics.beginFill('red').drawCircle(0, 0, 50)
+    circle.x = circle.y = 100
+    stage.addChild(circle)
 
-    ticker = () => stage.update();
-    gsap.ticker.add(ticker);
+    ticker = () => stage.update()
+    gsap.ticker.add(ticker)
 
     tween = gsap.to(circle, {
       duration: 2,
       scaleX: 0.5,
       scaleY: 0.5,
-      easel: { tint: 0x00ff00 },
+      easel: { tint: 0x00FF00 },
       repeat: -1,
       yoyo: true,
-    });
-  };
-  document.head.appendChild(script);
-});
+    })
+  }
+  document.head.appendChild(script)
+})
 
 onUnmounted(() => {
-  if (ticker) gsap.ticker.remove(ticker);
-  tween?.kill();
-  ticker = null;
-  tween = null;
-});
+  if (ticker) gsap.ticker.remove(ticker)
+  tween?.kill()
+  ticker = null
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
-  <canvas ref="easelContainer" class="easel-container" />
+  <canvas
+    ref="easelContainer"
+    class="easel-container"
+  />
 </template>
 
 <style scoped>

@@ -1,45 +1,51 @@
 <script setup lang="ts">
-const Flip = useFlip();
-const box = ref<HTMLElement | null>(null);
-const circle = ref<HTMLElement | null>(null);
-let animation: gsap.core.Timeline | null = null;
+const Flip = useFlip()
+const box = ref<HTMLElement | null>(null)
+const circle = ref<HTMLElement | null>(null)
+let animation: gsap.core.Timeline | null = null
 
 onMounted(() => {
-  const squares = gsap.utils.toArray<Element>([box.value!, circle.value!]) as [Element, Element];
+  const squares = gsap.utils.toArray<Element>([box.value!, circle.value!]) as [Element, Element]
 
   const doFlip = () => {
     // Get the initial state
-    const state = Flip.getState(squares);
+    const state = Flip.getState(squares)
 
     // Make DOM or styling changes (swap the squares in our case)
-    swap(squares);
+    swap(squares)
 
     // Animate from the initial state to the end state
-    animation = Flip.from(state, { duration: 2, ease: "power1.inOut", repeat: -1, yoyo: true });
-  };
+    animation = Flip.from(state, { duration: 2, ease: 'power1.inOut', repeat: -1, yoyo: true })
+  }
 
   // Given an Array of two siblings, append the one that's first so it's last (swap)
   const swap = ([a, b]: [Element, Element]) => {
     return a.parentNode!.children[0] === a
       ? a.parentNode!.appendChild(a)
-      : a.parentNode!.appendChild(b);
-  };
+      : a.parentNode!.appendChild(b)
+  }
 
-  doFlip();
-});
+  doFlip()
+})
 
 onUnmounted(() => {
-  animation?.kill();
-  animation = null;
-});
+  animation?.kill()
+  animation = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <div ref="box" class="box" />
-    <div ref="circle" class="circle" />
+    <div
+      ref="box"
+      class="box"
+    />
+    <div
+      ref="circle"
+      class="circle"
+    />
   </main>
 </template>
 

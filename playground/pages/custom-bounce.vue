@@ -1,45 +1,48 @@
 <script setup lang="ts">
-const CustomBounce = useCustomBounce();
-const box = ref<HTMLElement | null>(null);
-let bounceTween: ReturnType<typeof gsap.from> | null = null;
-let squashTween: ReturnType<typeof gsap.to> | null = null;
+const CustomBounce = useCustomBounce()
+const box = ref<HTMLElement | null>(null)
+let bounceTween: ReturnType<typeof gsap.from> | null = null
+let squashTween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
-  if (!CustomBounce || !box.value) return;
+  if (!CustomBounce || !box.value) return
 
   // Create a custom bounce ease:
-  CustomBounce.create("myBounce", {
+  CustomBounce.create('myBounce', {
     strength: 0.6,
     squash: 3,
-    squashID: "myBounce-squash",
-  });
+    squashID: 'myBounce-squash',
+  })
 
   // do the bounce by affecting the "y" property.
-  bounceTween = gsap.from(box.value, { duration: 2, y: -200, ease: "myBounce" });
+  bounceTween = gsap.from(box.value, { duration: 2, y: -200, ease: 'myBounce' })
 
   // and do the squash/stretch at the same time:
   squashTween = gsap.to(box.value, {
     duration: 2,
     scaleX: 1.4,
     scaleY: 0.3,
-    ease: "myBounce-squash",
-    transformOrigin: "center bottom",
-  });
-});
+    ease: 'myBounce-squash',
+    transformOrigin: 'center bottom',
+  })
+})
 
 onUnmounted(() => {
-  bounceTween?.kill();
-  squashTween?.kill();
-  bounceTween = null;
-  squashTween = null;
-});
+  bounceTween?.kill()
+  squashTween?.kill()
+  bounceTween = null
+  squashTween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <div ref="box" class="box" />
+    <div
+      ref="box"
+      class="box"
+    />
   </main>
 </template>
 

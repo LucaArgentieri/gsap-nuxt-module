@@ -1,42 +1,42 @@
 <script setup lang="ts">
-const appRef = ref<HTMLElement | null>(null);
+const appRef = ref<HTMLElement | null>(null)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let pixiApp: any = null;
-let pixiTween: gsap.core.Tween | null = null;
+let pixiApp: any = null
+let pixiTween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  const script = document.createElement("script");
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js";
+  const script = document.createElement('script')
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js'
   script.onload = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pixiApp = new (window as any).PIXI.Application({ width: 800, height: 600 });
-    appRef.value!.appendChild(pixiApp.view);
+    pixiApp = new (window as any).PIXI.Application({ width: 800, height: 600 })
+    appRef.value!.appendChild(pixiApp.view)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const graphics = new (window as any).PIXI.Graphics();
-    graphics.beginFill(0xde3249);
-    const pixiObject = graphics.drawRect(50, 50, 100, 100);
-    graphics.endFill();
+    const graphics = new (window as any).PIXI.Graphics()
+    graphics.beginFill(0xDE3249)
+    const pixiObject = graphics.drawRect(50, 50, 100, 100)
+    graphics.endFill()
 
     pixiTween = gsap.to(pixiObject, {
       pixi: { x: 500, scaleX: 2, scaleY: 1.5, skewX: 30, rotation: 60 },
       duration: 1,
-      ease: "expo.inOut",
-    });
+      ease: 'expo.inOut',
+    })
 
-    pixiApp.stage.addChild(graphics);
-  };
-  document.head.appendChild(script);
-});
+    pixiApp.stage.addChild(graphics)
+  }
+  document.head.appendChild(script)
+})
 
 onUnmounted(() => {
-  pixiTween?.kill();
-  pixiApp?.destroy(true);
-  pixiTween = null;
-  pixiApp = null;
-});
+  pixiTween?.kill()
+  pixiApp?.destroy(true)
+  pixiTween = null
+  pixiApp = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>

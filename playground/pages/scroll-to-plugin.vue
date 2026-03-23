@@ -1,11 +1,11 @@
 <script setup lang="ts">
 // const ScrollToPlugin = useScrollToPlugin()
 
-type LogoComponentRef = { $el: HTMLElement };
+type LogoComponentRef = { $el: HTMLElement }
 
-const nuxtLogoRef = ref<LogoComponentRef | null>(null);
-const gsapLogoRef = ref<LogoComponentRef | null>(null);
-let tween: gsap.core.Tween | null = null;
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.to(window, {
@@ -13,18 +13,18 @@ onMounted(() => {
     scrollTo: gsapLogoRef.value!.$el,
     repeat: -1,
     yoyo: true,
-    ease: "expo.inOut",
-  });
+    ease: 'expo.inOut',
+  })
 
   // ScrollToPlugin.config({ autoKill: true })
-});
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>

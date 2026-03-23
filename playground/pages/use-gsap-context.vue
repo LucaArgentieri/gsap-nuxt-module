@@ -1,57 +1,57 @@
 <script setup lang="ts">
 // ─── Section 1: auto-cleanup ─────────────────────────────────────────────────
 // useGsap(setup) — animations are reverted automatically when navigating away.
-const gsap = useGsap();
-const loopBoxRef = ref<HTMLDivElement | null>(null);
+const gsap = useGsap()
+const loopBoxRef = ref<HTMLDivElement | null>(null)
 
 useGsap(() => {
   gsap.to(loopBoxRef.value, {
     x: 200,
     duration: 1,
-    ease: "power2.inOut",
+    ease: 'power2.inOut',
     repeat: -1,
     yoyo: true,
-  });
-});
+  })
+})
 
 // ─── Section 2: scoped selector ──────────────────────────────────────────────
 // useGsap(setup, { scope }) — `.box` resolves only within the container.
-const containerRef = ref<HTMLDivElement | null>(null);
+const containerRef = ref<HTMLDivElement | null>(null)
 
 useGsap(
   () => {
-    gsap.to(".scoped-box", {
+    gsap.to('.scoped-box', {
       rotation: 360,
       duration: 2,
-      ease: "none",
+      ease: 'none',
       repeat: -1,
-    });
+    })
   },
   { scope: containerRef },
-);
+)
 
 // ─── Section 3: contextSafe event handler ────────────────────────────────────
 // contextSafe wraps click handlers so they are added to the existing context.
-const clickBoxRef = ref<HTMLDivElement | null>(null);
-const clickCount = ref(0);
+const clickBoxRef = ref<HTMLDivElement | null>(null)
+const clickCount = ref(0)
 
 const { contextSafe } = useGsap(() => {
-  gsap.set(clickBoxRef.value, { scale: 1 });
-});
+  gsap.set(clickBoxRef.value, { scale: 1 })
+})
 
 const handleClick = contextSafe(() => {
-  clickCount.value++;
+  clickCount.value++
   gsap.to(clickBoxRef.value, {
     scale: 1.4,
     duration: 0.15,
     yoyo: true,
     repeat: 1,
-    ease: "power1.inOut",
+    ease: 'power1.inOut',
     overwrite: true,
-  });
-});
+  })
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
@@ -67,7 +67,10 @@ definePageMeta({ pageTransition });
         <code>onUnmounted</code> needed.
       </p>
       <div class="stage">
-        <div ref="loopBoxRef" class="box green" />
+        <div
+          ref="loopBoxRef"
+          class="box green"
+        />
       </div>
     </section>
 
@@ -80,10 +83,17 @@ definePageMeta({ pageTransition });
       </p>
       <div class="stage">
         <!-- This .scoped-box is OUTSIDE the scope — should not rotate -->
-        <div class="scoped-box box orange outside-label">outside scope</div>
-        <div ref="containerRef" class="scope-container">
+        <div class="scoped-box box orange outside-label">
+          outside scope
+        </div>
+        <div
+          ref="containerRef"
+          class="scope-container"
+        >
           <!-- This .scoped-box is INSIDE the scope — should rotate -->
-          <div class="scoped-box box orange">inside scope</div>
+          <div class="scoped-box box orange">
+            inside scope
+          </div>
         </div>
       </div>
     </section>
@@ -96,8 +106,16 @@ definePageMeta({ pageTransition });
         existing GSAP context.
       </p>
       <div class="stage">
-        <button class="reset-btn" @click="handleClick">Click me ({{ clickCount }})</button>
-        <div ref="clickBoxRef" class="box purple" />
+        <button
+          class="reset-btn"
+          @click="handleClick"
+        >
+          Click me ({{ clickCount }})
+        </button>
+        <div
+          ref="clickBoxRef"
+          class="box purple"
+        />
       </div>
     </section>
 

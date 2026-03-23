@@ -1,26 +1,29 @@
 <script setup lang="ts">
-const box = ref<HTMLElement | null>(null);
-let tween: gsap.core.Tween | null = null;
+const box = ref<HTMLElement | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   tween = gsap.fromTo(
     box.value,
     { scale: 0.5 },
-    { duration: 5, scale: 3, ease: "expoScale(0.5, 3, power2.inOut)", repeat: -1, yoyo: true },
-  );
-});
+    { duration: 5, scale: 3, ease: 'expoScale(0.5, 3, power2.inOut)', repeat: -1, yoyo: true },
+  )
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <div ref="box" class="box" />
+    <div
+      ref="box"
+      class="box"
+    />
   </main>
 </template>
 

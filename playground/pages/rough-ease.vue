@@ -1,8 +1,8 @@
 <script setup lang="ts">
-type LogoComponentRef = { $el: HTMLElement };
+type LogoComponentRef = { $el: HTMLElement }
 
-const nuxtLogoRef = ref<LogoComponentRef | null>(null);
-let tween: gsap.core.Tween | null = null;
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
   // use the default values
@@ -12,18 +12,18 @@ onMounted(() => {
   tween = gsap.to(nuxtLogoRef.value!.$el, {
     duration: 2,
     y: 150,
-    ease: "rough({strength: 3, points: 50, template: strong.inOut, taper: both, randomize: false})",
+    ease: 'rough({strength: 3, points: 50, template: strong.inOut, taper: both, randomize: false})',
     repeat: -1,
     yoyo: true,
-  });
-});
+  })
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>

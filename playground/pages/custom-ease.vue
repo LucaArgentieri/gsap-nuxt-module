@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const customEase = useCustomEase();
-const box = ref<HTMLElement | null>(null);
-let tween: ReturnType<typeof gsap.fromTo> | null = null;
+const customEase = useCustomEase()
+const box = ref<HTMLElement | null>(null)
+let tween: ReturnType<typeof gsap.fromTo> | null = null
 
 onMounted(() => {
-  if (!customEase || !box.value) return;
+  if (!customEase || !box.value) return
 
   tween = gsap.fromTo(
     box.value,
@@ -14,24 +14,27 @@ onMounted(() => {
     {
       x: 300,
       duration: 1,
-      ease: customEase.create("smooth", "M0,0 C0.25,0.1 0.25,1 1,1"),
+      ease: customEase.create('smooth', 'M0,0 C0.25,0.1 0.25,1 1,1'),
       yoyo: true,
       repeat: -1,
     },
-  );
-});
+  )
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <div ref="box" class="box" />
+    <div
+      ref="box"
+      class="box"
+    />
   </main>
 </template>
 

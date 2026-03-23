@@ -1,26 +1,26 @@
 <script setup lang="ts">
-const ScrollSmoother = useScrollSmoother();
+const ScrollSmoother = useScrollSmoother()
 
-const nuxtLogoRef = ref(null);
-const gsapLogoRef = ref(null);
-let smoother: { kill: () => void } | null = null;
+const nuxtLogoRef = ref(null)
+const gsapLogoRef = ref(null)
+let smoother: { kill: () => void } | null = null
 
 onMounted(() => {
-  if (!ScrollSmoother) return;
+  if (!ScrollSmoother) return
 
   smoother = ScrollSmoother.create({
     smooth: 1,
     effects: true, // looks for data-speed and data-lag attributes on elements
     smoothTouch: 0.1, // much shorter smoothing time on touch devices (default is NO smoothing on touch devices)
-  });
-});
+  })
+})
 
 onUnmounted(() => {
-  smoother?.kill();
-  smoother = null;
-});
+  smoother?.kill()
+  smoother = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>

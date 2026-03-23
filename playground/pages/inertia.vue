@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { Draggable as DraggablePlugin } from "gsap/all";
+import type { Draggable as DraggablePlugin } from 'gsap/all'
 
-const Draggable = useDraggable();
+const Draggable = useDraggable()
 
 type LogoComponentRef = {
-  $el: HTMLElement;
-};
+  $el: HTMLElement
+}
 
-const nuxtLogoRef = ref<LogoComponentRef | null>(null);
-const gsapLogoRef = ref<LogoComponentRef | null>(null);
-let draggables: DraggablePlugin[] = [];
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let draggables: DraggablePlugin[] = []
 
 onMounted(() => {
-  if (!Draggable || !nuxtLogoRef.value || !gsapLogoRef.value) return;
+  if (!Draggable || !nuxtLogoRef.value || !gsapLogoRef.value) return
 
   draggables = [
     ...Draggable.create(nuxtLogoRef.value.$el, {
@@ -21,15 +21,15 @@ onMounted(() => {
     ...Draggable.create(gsapLogoRef.value.$el, {
       inertia: true,
     }),
-  ];
-});
+  ]
+})
 
 onUnmounted(() => {
-  draggables.forEach((instance) => instance.kill());
-  draggables = [];
-});
+  draggables.forEach(instance => instance.kill())
+  draggables = []
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>

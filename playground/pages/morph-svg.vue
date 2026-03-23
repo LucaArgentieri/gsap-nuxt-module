@@ -1,28 +1,35 @@
 <script setup lang="ts">
-let tween: gsap.core.Tween | null = null;
+let tween: gsap.core.Tween | null = null
 
 onMounted(() => {
-  tween = gsap.to("#circle", {
+  tween = gsap.to('#circle', {
     duration: 1.5,
-    morphSVG: "#hippo",
+    morphSVG: '#hippo',
     repeat: -1,
     yoyo: true,
     repeatDelay: 0.2,
-    ease: "expo.inOut",
-  });
-});
+    ease: 'expo.inOut',
+  })
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <svg id="svg2" xml:space="preserve" x="0" y="0" version="1.1" viewBox="9 80 800 400">
+    <svg
+      id="svg2"
+      xml:space="preserve"
+      x="0"
+      y="0"
+      version="1.1"
+      viewBox="9 80 800 400"
+    >
       <path
         id="circle"
         d="M490.1 280.649c0 44.459-36.041 80.5-80.5 80.5s-80.5-36.041-80.5-80.5 36.041-80.5 80.5-80.5 80.5 36.041 80.5 80.5z"

@@ -1,27 +1,30 @@
 <script setup lang="ts">
-const CustomWiggle = useCustomWiggle();
-const box = ref<HTMLElement | null>(null);
-let tween: ReturnType<typeof gsap.to> | null = null;
+const CustomWiggle = useCustomWiggle()
+const box = ref<HTMLElement | null>(null)
+let tween: ReturnType<typeof gsap.to> | null = null
 
 onMounted(() => {
-  if (!CustomWiggle || !box.value) return;
+  if (!CustomWiggle || !box.value) return
 
-  CustomWiggle.create("myWiggle", { wiggles: 15 });
+  CustomWiggle.create('myWiggle', { wiggles: 15 })
 
-  tween = gsap.to(box.value, { y: 60, x: 60, duration: 2, rotation: 30, ease: "myWiggle" });
-});
+  tween = gsap.to(box.value, { y: 60, x: 60, duration: 2, rotation: 30, ease: 'myWiggle' })
+})
 
 onUnmounted(() => {
-  tween?.kill();
-  tween = null;
-});
+  tween?.kill()
+  tween = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
   <main>
-    <div ref="box" class="box" />
+    <div
+      ref="box"
+      class="box"
+    />
   </main>
 </template>
 

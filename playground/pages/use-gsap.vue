@@ -1,21 +1,21 @@
 <script setup lang="ts">
-const gsap = useGsap();
-const boxRef = ref<HTMLDivElement | null>(null);
-let tl: ReturnType<typeof gsap.timeline> | null = null;
+const gsap = useGsap()
+const boxRef = ref<HTMLDivElement | null>(null)
+let tl: ReturnType<typeof gsap.timeline> | null = null
 
 onMounted(() => {
-  tl = gsap.timeline({ repeat: -1, yoyo: true });
-  tl.to(boxRef.value, { x: 200, duration: 1, ease: "power2.inOut" })
+  tl = gsap.timeline({ repeat: -1, yoyo: true })
+  tl.to(boxRef.value, { x: 200, duration: 1, ease: 'power2.inOut' })
     .to(boxRef.value, { rotation: 360, duration: 0.8 })
-    .to(boxRef.value, { scale: 1.5, duration: 0.5 });
-});
+    .to(boxRef.value, { scale: 1.5, duration: 0.5 })
+})
 
 onUnmounted(() => {
-  tl?.kill();
-  tl = null;
-});
+  tl?.kill()
+  tl = null
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
@@ -23,7 +23,10 @@ definePageMeta({ pageTransition });
     <h1>useGsap()</h1>
     <p>Returns the GSAP instance for direct use — timeline, tweens, easing.</p>
     <div class="stage">
-      <div ref="boxRef" class="box" />
+      <div
+        ref="boxRef"
+        class="box"
+      />
     </div>
     <NuxtLink to="/">← Back</NuxtLink>
   </main>

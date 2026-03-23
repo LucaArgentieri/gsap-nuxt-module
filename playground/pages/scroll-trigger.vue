@@ -1,21 +1,21 @@
 <script setup lang="ts">
-const ScrollTrigger = useScrollTrigger();
+const ScrollTrigger = useScrollTrigger()
 
 type LogoComponentRef = {
-  $el: HTMLElement;
-};
+  $el: HTMLElement
+}
 
-const nuxtLogoRef = ref<LogoComponentRef | null>(null);
-const gsapLogoRef = ref<LogoComponentRef | null>(null);
-let animations: ReturnType<typeof gsap.fromTo>[] = [];
+const nuxtLogoRef = ref<LogoComponentRef | null>(null)
+const gsapLogoRef = ref<LogoComponentRef | null>(null)
+let animations: ReturnType<typeof gsap.fromTo>[] = []
 
 onMounted(() => {
-  if (!ScrollTrigger || !nuxtLogoRef.value || !gsapLogoRef.value) return;
+  if (!ScrollTrigger || !nuxtLogoRef.value || !gsapLogoRef.value) return
 
-  const nuxtLogo = nuxtLogoRef.value.$el;
-  const gsapLogo = gsapLogoRef.value.$el;
+  const nuxtLogo = nuxtLogoRef.value.$el
+  const gsapLogo = gsapLogoRef.value.$el
 
-  console.log("ScrollTrigger.create:", ScrollTrigger.create);
+  console.log('ScrollTrigger.create:', ScrollTrigger.create)
 
   const nuxtTween = gsap.fromTo(
     nuxtLogo,
@@ -26,12 +26,12 @@ onMounted(() => {
       x: 500,
       scrollTrigger: {
         trigger: nuxtLogo,
-        start: "top+=100px center",
-        end: "bottom center",
+        start: 'top+=100px center',
+        end: 'bottom center',
         markers: true,
       },
     },
-  );
+  )
 
   const gsapTween = gsap.fromTo(
     gsapLogo,
@@ -42,23 +42,23 @@ onMounted(() => {
       x: 500,
       scrollTrigger: {
         trigger: gsapLogo,
-        start: "top center",
-        end: "bottom center",
+        start: 'top center',
+        end: 'bottom center',
         scrub: true,
         markers: true,
       },
     },
-  );
+  )
 
-  animations = [nuxtTween, gsapTween];
-});
+  animations = [nuxtTween, gsapTween]
+})
 
 onUnmounted(() => {
-  animations.forEach((animation) => animation.kill());
-  animations = [];
-});
+  animations.forEach(animation => animation.kill())
+  animations = []
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
