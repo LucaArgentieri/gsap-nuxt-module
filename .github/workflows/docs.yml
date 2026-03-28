@@ -37,7 +37,7 @@ jobs:
         env:
           NUXT_APP_BASE_URL: /gsap-nuxt-module/
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v4
         with:
