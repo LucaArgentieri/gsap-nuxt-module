@@ -1,6 +1,3 @@
 {
-  "extends": "./.nuxt/tsconfig.json",
-  "compilerOptions": {
-    "forceConsistentCasingInFileNames": false
-  }
+  "extends": "./.nuxt/tsconfig.json"
 }

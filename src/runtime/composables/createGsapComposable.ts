@@ -158,9 +158,9 @@ export const useMotionPathHelper
   = createGsapComposable<typeof import('gsap/MotionPathHelper').MotionPathHelper>('MotionPathHelper')
 
 // UI Plugins
-export const useDraggable = createGsapComposable<typeof import('gsap/all').Draggable>('Draggable')
-export const useFlip = createGsapComposable<typeof import('gsap/all').Flip>('Flip')
-export const useObserver = createGsapComposable<typeof import('gsap/all').Observer>('Observer')
+export const useDraggable = createGsapComposable<typeof import('gsap/Draggable').Draggable>('Draggable')
+export const useFlip = createGsapComposable<typeof import('gsap/Flip').Flip>('Flip')
+export const useObserver = createGsapComposable<typeof import('gsap/Observer').Observer>('Observer')
 
 // Other Plugins
 export const useGSDevTools

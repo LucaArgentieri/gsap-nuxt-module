@@ -1,7 +1,4 @@
 {
   "extends": "./.nuxt/tsconfig.json",
-  "exclude": ["dist", "node_modules", "playground", "docs", "test/fixtures"],
-  "compilerOptions": {
-    "forceConsistentCasingInFileNames": false
-  }
+  "exclude": ["dist", "node_modules", "playground", "docs", "test/fixtures"]
 }
