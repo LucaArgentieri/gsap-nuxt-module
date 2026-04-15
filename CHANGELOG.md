@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v1.2.0
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.9...v1.2.0)
+
+### 🏡 Chore
+
+- Bump gsap to 3.15.0 and module to 1.2.0 ([fe5ccc3](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/fe5ccc3))
+- Revert manual version bump, let changelogen handle release ([7ef4379](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/7ef4379))
+- Use bun.lock, bump module to v1.2.0 ([70ee121](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/70ee121))
+
+### ❤️ Contributors
+
+- Luca Argentieri <Lucaargentieri-98@hotmail.it>
+- Claude <noreply@anthropic.com>
+
 ## v1.1.9
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.8...v1.1.9)
