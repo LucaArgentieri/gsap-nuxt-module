@@ -52,7 +52,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  animations.forEach(animation => {
+  animations.forEach((animation) => {
     animation.scrollTrigger?.kill()
     animation.kill()
   })

@@ -1,53 +1,53 @@
 <script setup lang="ts">
-const gsap = useGsap();
-const actorRef = ref<HTMLDivElement | null>(null);
-const elapsed = ref(0);
+const gsap = useGsap()
+const actorRef = ref<HTMLDivElement | null>(null)
+const elapsed = ref(0)
 
-const DURATION = 8;
+const DURATION = 8
 
 useGsap(() => {
   const tl = gsap.timeline({
     onUpdate() {
-      elapsed.value = tl.time();
+      elapsed.value = tl.time()
     },
     repeat: -1,
-  });
+  })
 
-  tl.to(actorRef.value, { x: 260, duration: 2, ease: "power2.inOut" })
+  tl.to(actorRef.value, { x: 260, duration: 2, ease: 'power2.inOut' })
     .to(actorRef.value, {
       rotation: 180,
       scale: 1.4,
       duration: 2,
-      ease: "back.inOut(1.7)",
+      ease: 'back.inOut(1.7)',
     })
     .to(actorRef.value, {
       x: 0,
-      backgroundColor: "#f5a623",
+      backgroundColor: '#f5a623',
       duration: 2,
-      ease: "power2.inOut",
+      ease: 'power2.inOut',
     })
     .to(actorRef.value, {
       rotation: 360,
       scale: 1,
-      backgroundColor: "#88ce02",
+      backgroundColor: '#88ce02',
       duration: 2,
-      ease: "power2.inOut",
-    });
-});
+      ease: 'power2.inOut',
+    })
+})
 
 const progress = computed(() =>
   Math.min(Math.round((elapsed.value / DURATION) * 100), 100),
-);
+)
 const phase = computed(() => {
-  const p = progress.value;
-  if (p < 25) return "Phase 1 — sliding right";
-  if (p < 50) return "Phase 2 — rotating & scaling";
-  if (p < 75) return "Phase 3 — sliding back";
-  if (p < 100) return "Phase 4 — full spin & reset";
-  return "Complete";
-});
+  const p = progress.value
+  if (p < 25) return 'Phase 1 — sliding right'
+  if (p < 50) return 'Phase 2 — rotating & scaling'
+  if (p < 75) return 'Phase 3 — sliding back'
+  if (p < 100) return 'Phase 4 — full spin & reset'
+  return 'Complete'
+})
 
-definePageMeta({ pageTransition });
+definePageMeta({ pageTransition })
 </script>
 
 <template>
@@ -56,21 +56,30 @@ definePageMeta({ pageTransition });
       <h1>useGsap() — Finite Timeline</h1>
       <p class="hint">
         Click the link below <strong>mid-animation</strong> to test cleanup
-        timing.<br />
+        timing.<br>
         Expected: the box keeps animating through the 1s page fade-out, then
-        stops cleanly.<br />
+        stops cleanly.<br>
         Bug: box snaps back to start immediately on click (early revert).
       </p>
-      <NuxtLink to="/" class="nav-link"> ← Navigate away </NuxtLink>
+      <NuxtLink
+        to="/"
+        class="nav-link"
+      > ← Navigate away </NuxtLink>
     </header>
 
     <section class="stage">
-      <div ref="actorRef" class="actor" />
+      <div
+        ref="actorRef"
+        class="actor"
+      />
     </section>
 
     <section class="progress-panel">
       <div class="track">
-        <div class="fill" :style="{ width: `${progress}%` }" />
+        <div
+          class="fill"
+          :style="{ width: `${progress}%` }"
+        />
       </div>
       <p class="time">
         {{ elapsed.toFixed(1) }}s / {{ DURATION }}s &nbsp;({{ progress }}%)
