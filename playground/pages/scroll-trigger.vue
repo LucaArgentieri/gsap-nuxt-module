@@ -15,8 +15,6 @@ onMounted(() => {
   const nuxtLogo = nuxtLogoRef.value.$el
   const gsapLogo = gsapLogoRef.value.$el
 
-  console.log('ScrollTrigger.create:', ScrollTrigger.create)
-
   const nuxtTween = gsap.fromTo(
     nuxtLogo,
     {
@@ -54,7 +52,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  animations.forEach(animation => animation.kill())
+  animations.forEach(animation => {
+    animation.scrollTrigger?.kill()
+    animation.kill()
+  })
   animations = []
 })
 

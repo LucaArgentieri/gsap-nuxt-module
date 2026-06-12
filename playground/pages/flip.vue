@@ -5,7 +5,8 @@ const circle = ref<HTMLElement | null>(null)
 let animation: gsap.core.Timeline | null = null
 
 onMounted(() => {
-  const squares = gsap.utils.toArray<Element>([box.value!, circle.value!]) as [Element, Element]
+  if (!box.value || !circle.value) return
+  const squares = gsap.utils.toArray<Element>([box.value, circle.value]) as [Element, Element]
 
   const doFlip = () => {
     // Get the initial state

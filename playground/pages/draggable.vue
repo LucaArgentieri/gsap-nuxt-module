@@ -9,7 +9,8 @@ const nuxtLogoRef = ref<LogoComponentRef | null>(null)
 let draggables: DraggablePlugin[] = []
 
 onMounted(() => {
-  draggables = Draggable.create(nuxtLogoRef.value!.$el)
+  if (!nuxtLogoRef.value) return
+  draggables = Draggable.create(nuxtLogoRef.value.$el)
 })
 
 onUnmounted(() => {

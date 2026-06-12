@@ -28,6 +28,7 @@ onUnmounted(() => {
 const demos = [
   { label: 'useGsap', path: '/use-gsap' },
   { label: 'useGsap (context)', path: '/use-gsap-context' },
+  { label: 'useGsap (timeline)', path: '/use-gsap-timeline' },
   { label: 'Page Transition', path: '/page-transition' },
   { label: 'ScrollTrigger', path: '/scroll-trigger' },
   { label: 'Draggable', path: '/draggable' },
