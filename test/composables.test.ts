@@ -8,11 +8,16 @@ vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
 }))
 
+vi.mock('#build/nuxt.config.mjs', () => ({
+  appPageTransition: null,
+}))
+
 // Intercept Vue lifecycle hooks so they can be triggered manually in tests.
 // This avoids needing @vue/test-utils while keeping tests isolated.
 const mountedCallbacks: Array<() => void> = []
 const unmountedCallbacks: Array<() => void> = []
-const routeLeaveCallbacks: Array<() => void> = []
+type RouteLeaveCallback = (to: unknown, from: { meta: Record<string, unknown> }) => void
+const routeLeaveCallbacks: RouteLeaveCallback[] = []
 const watchCallbacks: Array<() => void> = []
 
 vi.mock('vue', async () => {
@@ -26,7 +31,7 @@ vi.mock('vue', async () => {
 })
 
 vi.mock('vue-router', () => ({
-  onBeforeRouteLeave: vi.fn((cb: () => void) => { routeLeaveCallbacks.push(cb) }),
+  onBeforeRouteLeave: vi.fn((cb: RouteLeaveCallback) => { routeLeaveCallbacks.push(cb) }),
 }))
 
 describe('createGsapComposable', () => {
@@ -229,8 +234,8 @@ describe('useGsap cleanupOn option', () => {
     mountedCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
 
-    // Simulate route leave
-    routeLeaveCallbacks.forEach(cb => cb())
+    // Simulate route leave from a page with a transition
+    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
     // Then simulate the page:transition:finish hook
     transitionFinishCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
@@ -264,7 +269,8 @@ describe('useGsap cleanupOn option', () => {
     mountedCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
 
-    routeLeaveCallbacks.forEach(cb => cb())
+    // Leaving a page with a transition → defers to page:transition:finish
+    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
     transitionFinishCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
   })
@@ -296,8 +302,8 @@ describe('useGsap cleanupOn option', () => {
     useGsap(() => {})
     mountedCallbacks.forEach(cb => cb())
 
-    // Simulate route leave (sets isLeavingViaRoute = true)
-    routeLeaveCallbacks.forEach(cb => cb())
+    // Simulate route leave from a page with a transition (sets isLeavingViaRoute = true)
+    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
 
     // Component unmounts (leave transition ended) before transition:finish — revert must NOT fire
     unmountedCallbacks.forEach(cb => cb())
@@ -335,12 +341,37 @@ describe('useGsap cleanupOn option', () => {
     useGsap(() => {}, { cleanupOn: 'route-leave' })
     mountedCallbacks.forEach(cb => cb())
 
-    // Simulate route leave first, then page:transition:finish (sets ctx to null)
-    routeLeaveCallbacks.forEach(cb => cb())
+    // Simulate route leave from a page with a transition, then page:transition:finish (sets ctx to null)
+    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
     transitionFinishCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
 
     // Scope dispose after — revert should NOT be called again (ctx is null)
+    unmountedCallbacks.forEach(cb => cb())
+    expect(revertSpy).toHaveBeenCalledOnce()
+  })
+
+  it('reverts context immediately in onUnmounted when leaving page has no transition', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const revertSpy = vi.fn()
+    vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: revertSpy,
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
+
+    useGsap(() => {})
+    mountedCallbacks.forEach(cb => cb())
+    expect(revertSpy).not.toHaveBeenCalled()
+
+    // Route leave with no pageTransition in meta — willTransition is false, hookOnce NOT registered
+    routeLeaveCallbacks.forEach(cb => cb({}, { meta: {} }))
+    expect(revertSpy).not.toHaveBeenCalled()
+
+    // onUnmounted fires — reverts immediately (isLeavingViaRoute stayed false)
     unmountedCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
   })

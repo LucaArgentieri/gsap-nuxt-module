@@ -1,4 +1,5 @@
 import { useNuxtApp } from '#app'
+import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
 import { gsap } from 'gsap'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
 import { onMounted, onUnmounted, watch } from 'vue'
@@ -22,22 +23,15 @@ export interface UseGsapOptions {
    * When to revert the GSAP context during page navigation.
    *
    * @deprecated This option has no behavioral effect. Both `'unmount'` and
-   * `'route-leave'` produce identical behavior: the GSAP context is reverted
-   * after the leave transition finishes, when the component unmounts via
-   * `onScopeDispose`. Kept for backward compatibility only.
-   *
-   * - `'unmount'` (default) — reverts after the leave transition finishes,
-   *   when the component is unmounted via `onScopeDispose`.
-   * - `'route-leave'` — semantically identical to `'unmount'`.
-   *
-   * In both cases, animations continue to play during the leave transition,
-   * then are reverted once the component unmounts.
+   * `'route-leave'` produce identical behavior: when the leaving page has a
+   * transition defined (per-page `definePageMeta({ pageTransition })` or a
+   * global `app.pageTransition` in `nuxt.config`), the GSAP context is deferred
+   * until `page:transition:finish`; otherwise it reverts immediately in
+   * `onUnmounted`. Kept for backward compatibility only.
    *
    * **Note:** if a `router.beforeEach` guard rejects navigation *after*
-   * `onBeforeRouteLeave` is registered, the `onBeforeRouteLeave` hook will still
-   * have fired and set `isLeavingViaRoute` to `true`, but the component will not unmount.
-   * The context remains active and animations continue until the next successful
-   * navigation.
+   * `onBeforeRouteLeave` fires, `isLeavingViaRoute` is NOT set (the conditional
+   * check for a transition runs in the guard), so the context stays active.
    *
    * @example
    * // Continuous animation that should play through the page-leave transition
@@ -94,13 +88,18 @@ export function useGsap(
     ctx = gsap.context(setup, scope)
   }
 
-  onBeforeRouteLeave(() => {
-    isLeavingViaRoute = true
-    const nuxtApp = useNuxtApp()
-    nuxtApp.hooks.hookOnce('page:transition:finish', () => {
-      ctx?.revert()
-      ctx = null
-    })
+  onBeforeRouteLeave((_to, from) => {
+    const willTransition = from.meta.pageTransition !== false
+      && !!(from.meta.pageTransition ?? defaultPageTransition)
+
+    if (willTransition) {
+      isLeavingViaRoute = true
+      const nuxtApp = useNuxtApp()
+      nuxtApp.hooks.hookOnce('page:transition:finish', () => {
+        ctx?.revert()
+        ctx = null
+      })
+    }
   })
 
   onMounted(() => {
