@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v1.2.1
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.9...v1.2.1)
+
+### 🩹 Fixes
+
+- **useGsap:** Replace onScopeDispose with onUnmounted to fix premature context revert ([2abbd09](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/2abbd09))
+- **playground:** Fix ScrollTrigger cleanup and add null guards ([8462a8d](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/8462a8d))
+
+### 🏡 Chore
+
+- **release:** V1.1.9 ([ae1d08f](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/ae1d08f))
+- Bump gsap to 3.15.0 and module to 1.2.0 ([fe5ccc3](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/fe5ccc3))
+- Revert manual version bump, let changelogen handle release ([7ef4379](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/7ef4379))
+- Use bun.lock, bump module to v1.2.0 ([70ee121](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/70ee121))
+- **release:** V1.2.0 ([66ea64f](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/66ea64f))
+
+### ❤️ Contributors
+
+- Luca Argentieri <lucaargentieri98@gmail.com>
+- Claude <noreply@anthropic.com>
+
 ## v1.2.0
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.9...v1.2.0)
