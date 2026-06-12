@@ -1,7 +1,7 @@
 import { useNuxtApp } from '#app'
 import { gsap } from 'gsap'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { onMounted, onScopeDispose, watch } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { createGsapComposable } from '../create-gsap-composable'
 
@@ -122,7 +122,7 @@ export function useGsap(
     )
   }
 
-  onScopeDispose(() => {
+  onUnmounted(() => {
     if (!isLeavingViaRoute) {
       ctx?.revert()
       ctx = null

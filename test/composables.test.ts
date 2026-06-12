@@ -11,7 +11,7 @@ vi.mock('#app', () => ({
 // Intercept Vue lifecycle hooks so they can be triggered manually in tests.
 // This avoids needing @vue/test-utils while keeping tests isolated.
 const mountedCallbacks: Array<() => void> = []
-const disposeCallbacks: Array<() => void> = []
+const unmountedCallbacks: Array<() => void> = []
 const routeLeaveCallbacks: Array<() => void> = []
 const watchCallbacks: Array<() => void> = []
 
@@ -20,7 +20,7 @@ vi.mock('vue', async () => {
   return {
     ...actual,
     onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
-    onScopeDispose: vi.fn((cb: () => void) => { disposeCallbacks.push(cb) }),
+    onUnmounted: vi.fn((cb: () => void) => { unmountedCallbacks.push(cb) }),
     watch: vi.fn((_sources: unknown, cb: () => void) => { watchCallbacks.push(cb) }),
   }
 })
@@ -91,7 +91,7 @@ describe('useGsap', () => {
 describe('useGsap with setup', () => {
   beforeEach(() => {
     mountedCallbacks.length = 0
-    disposeCallbacks.length = 0
+    unmountedCallbacks.length = 0
     vi.restoreAllMocks()
   })
 
@@ -134,7 +134,7 @@ describe('useGsap with setup', () => {
     expect(handler).toHaveBeenCalledOnce()
   })
 
-  it('reverts context on scope dispose', async () => {
+  it('reverts context on unmount', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
@@ -151,7 +151,7 @@ describe('useGsap with setup', () => {
     mountedCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
 
-    disposeCallbacks.forEach(cb => cb())
+    unmountedCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
@@ -165,7 +165,7 @@ describe('useGsap with setup', () => {
 describe('useGsap cleanupOn option', () => {
   beforeEach(() => {
     mountedCallbacks.length = 0
-    disposeCallbacks.length = 0
+    unmountedCallbacks.length = 0
     routeLeaveCallbacks.length = 0
     transitionFinishCallbacks.length = 0
     vi.clearAllMocks()
@@ -269,7 +269,7 @@ describe('useGsap cleanupOn option', () => {
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
-  it('skips onScopeDispose revert when scope is disposed eagerly during navigation', async () => {
+  it('skips onUnmounted revert when component unmounts during navigation', async () => {
     const { useNuxtApp } = await import('#app')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
@@ -299,8 +299,8 @@ describe('useGsap cleanupOn option', () => {
     // Simulate route leave (sets isLeavingViaRoute = true)
     routeLeaveCallbacks.forEach(cb => cb())
 
-    // Scope is disposed eagerly by Nuxt before transition:finish — revert must NOT fire
-    disposeCallbacks.forEach(cb => cb())
+    // Component unmounts (leave transition ended) before transition:finish — revert must NOT fire
+    unmountedCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
 
     // Transition finishes — revert fires now
@@ -308,7 +308,7 @@ describe('useGsap cleanupOn option', () => {
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
-  it('still reverts on scope dispose when cleanupOn is route-leave (safety fallback)', async () => {
+  it('does not double-revert on unmount after page:transition:finish already ran', async () => {
     const { useNuxtApp } = await import('#app')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
@@ -341,7 +341,7 @@ describe('useGsap cleanupOn option', () => {
     expect(revertSpy).toHaveBeenCalledOnce()
 
     // Scope dispose after — revert should NOT be called again (ctx is null)
-    disposeCallbacks.forEach(cb => cb())
+    unmountedCallbacks.forEach(cb => cb())
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 })
@@ -349,7 +349,7 @@ describe('useGsap cleanupOn option', () => {
 describe('useGsap options', () => {
   beforeEach(() => {
     mountedCallbacks.length = 0
-    disposeCallbacks.length = 0
+    unmountedCallbacks.length = 0
     watchCallbacks.length = 0
     vi.restoreAllMocks()
   })
