@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.2.2
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.1...v1.2.2)
+
+### 🩹 Fixes
+
+- **useGsap:** Only defer revert to page:transition:finish when a transition exists ([c712967](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/c712967))
+- **playground:** Guard transition hooks and add no-transition demo ([60311bc](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/60311bc))
+
+### ❤️ Contributors
+
+- Luca Argentieri <lucaargentieri98@gmail.com>
+
 ## v1.2.1
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.1.9...v1.2.1)
