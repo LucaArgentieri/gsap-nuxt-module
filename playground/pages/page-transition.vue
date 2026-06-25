@@ -39,8 +39,8 @@ definePageMeta({
 <template>
   <div class="page-container">
     <header>
-      <h1>Page Transition + Cleanup Strategies</h1>
-      <p>Navigate away to see both cleanup strategies in action during the page transition.</p>
+      <h1>Page Transition + Teardown Cleanup</h1>
+      <p>Navigate away to verify that both examples are cleaned up during component teardown.</p>
     </header>
 
     <div class="columns">
@@ -48,10 +48,10 @@ definePageMeta({
         ref="containerA"
         class="column"
       >
-        <h2>cleanupOn: 'route-leave'</h2>
+        <h2>Deprecated `cleanupOn`</h2>
         <p>
-          Reverts via <code>onScopeDispose</code> after the leave transition finishes — boxes keep
-          bouncing <strong>through</strong> the fade-out, then stop when the component unmounts.
+          This example still passes <code>cleanupOn: 'route-leave'</code>, but the option is ignored.
+          Cleanup happens during teardown, just like the default path.
         </p>
         <div class="boxes">
           <div class="box box-a" />
@@ -64,10 +64,10 @@ definePageMeta({
         ref="containerB"
         class="column"
       >
-        <h2>cleanupOn: 'unmount' (default)</h2>
+        <h2>Default behavior</h2>
         <p>
-          Reverts via <code>onScopeDispose</code> — boxes keep bouncing <strong>through</strong> the
-          fade-out, then stop when the component unmounts.
+          The default setup follows the same behavior: the GSAP context is reverted when the
+          component is torn down, with no route-leave hook involved.
         </p>
         <div class="boxes">
           <div class="box box-b" />

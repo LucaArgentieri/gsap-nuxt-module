@@ -1,9 +1,6 @@
-import { useNuxtApp } from '#app'
-import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
 import { gsap } from 'gsap'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { onMounted, onUnmounted, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
+import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { createGsapComposable } from '../create-gsap-composable'
 
 /**
@@ -22,19 +19,11 @@ export interface UseGsapOptions {
   /**
    * When to revert the GSAP context during page navigation.
    *
-   * @deprecated This option has no behavioral effect. Both `'unmount'` and
-   * `'route-leave'` produce identical behavior: when the leaving page has a
-   * transition defined (per-page `definePageMeta({ pageTransition })` or a
-   * global `app.pageTransition` in `nuxt.config`), the GSAP context is deferred
-   * until `page:transition:finish`; otherwise it reverts immediately in
-   * `onUnmounted`. Kept for backward compatibility only.
-   *
-   * **Note:** if a `router.beforeEach` guard rejects navigation *after*
-   * `onBeforeRouteLeave` fires, `isLeavingViaRoute` is NOT set (the conditional
-   * check for a transition runs in the guard), so the context stays active.
+   * @deprecated This option is ignored and kept only for backward compatibility.
+   * Cleanup always happens during component teardown via `onUnmounted`.
    *
    * @example
-   * // Continuous animation that should play through the page-leave transition
+   * // `cleanupOn` is ignored, but still accepted for compatibility
    * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
    */
   cleanupOn?: 'unmount' | 'route-leave'
@@ -81,29 +70,28 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null
-  let isLeavingViaRoute = false
+  let setupVersion = 0
+  let isUnmounted = false
 
-  const runSetup = () => {
+  const clearContext = () => {
+    ctx?.revert()
+    ctx = null
+  }
+
+  const scheduleSetup = async () => {
+    const version = ++setupVersion
+    await nextTick()
+
+    if (isUnmounted || version !== setupVersion) {
+      return
+    }
+
     const scope = options?.scope?.value ?? undefined
     ctx = gsap.context(setup, scope)
   }
 
-  onBeforeRouteLeave((_to, from) => {
-    const willTransition = from.meta.pageTransition !== false
-      && !!(from.meta.pageTransition ?? defaultPageTransition)
-
-    if (willTransition) {
-      isLeavingViaRoute = true
-      const nuxtApp = useNuxtApp()
-      nuxtApp.hooks.hookOnce('page:transition:finish', () => {
-        ctx?.revert()
-        ctx = null
-      })
-    }
-  })
-
   onMounted(() => {
-    runSetup()
+    void scheduleSetup()
   })
 
   if (options?.dependencies !== undefined) {
@@ -114,18 +102,17 @@ export function useGsap(
       deps,
       () => {
         if (options.revertOnUpdate === false) return
-        ctx?.revert()
-        runSetup()
+        clearContext()
+        void scheduleSetup()
       },
       { flush: 'post' },
     )
   }
 
   onUnmounted(() => {
-    if (!isLeavingViaRoute) {
-      ctx?.revert()
-      ctx = null
-    }
+    isUnmounted = true
+    setupVersion++
+    clearContext()
   })
 
   const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F): F => {

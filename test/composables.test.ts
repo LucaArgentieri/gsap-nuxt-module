@@ -1,38 +1,37 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGsapComposable } from '../src/runtime/create-gsap-composable'
-
-// Mock #app to avoid Nuxt context requirement in unit tests
-const transitionFinishCallbacks: Array<() => void> = []
 
 vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
 }))
 
-vi.mock('#build/nuxt.config.mjs', () => ({
-  appPageTransition: null,
-}))
-
-// Intercept Vue lifecycle hooks so they can be triggered manually in tests.
-// This avoids needing @vue/test-utils while keeping tests isolated.
-const mountedCallbacks: Array<() => void> = []
+const mountedCallbacks: Array<() => void | Promise<void>> = []
 const unmountedCallbacks: Array<() => void> = []
-type RouteLeaveCallback = (to: unknown, from: { meta: Record<string, unknown> }) => void
-const routeLeaveCallbacks: RouteLeaveCallback[] = []
-const watchCallbacks: Array<() => void> = []
+const watchCallbacks: Array<() => void | Promise<void>> = []
+const nextTickMock = vi.fn(() => Promise.resolve())
 
 vi.mock('vue', async () => {
   const actual = await vi.importActual<typeof import('vue')>('vue')
   return {
     ...actual,
-    onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
+    nextTick: nextTickMock,
+    onMounted: vi.fn((cb: () => void | Promise<void>) => { mountedCallbacks.push(cb) }),
     onUnmounted: vi.fn((cb: () => void) => { unmountedCallbacks.push(cb) }),
-    watch: vi.fn((_sources: unknown, cb: () => void) => { watchCallbacks.push(cb) }),
+    watch: vi.fn((_sources: unknown, cb: () => void | Promise<void>) => { watchCallbacks.push(cb) }),
   }
 })
 
 vi.mock('vue-router', () => ({
-  onBeforeRouteLeave: vi.fn((cb: RouteLeaveCallback) => { routeLeaveCallbacks.push(cb) }),
+  onBeforeRouteLeave: vi.fn(),
 }))
+
+const flushMount = async () => {
+  await Promise.all(mountedCallbacks.map(cb => cb()))
+}
+
+const flushWatch = async () => {
+  await Promise.all(watchCallbacks.map(cb => cb()))
+}
 
 describe('createGsapComposable', () => {
   beforeEach(() => {
@@ -62,13 +61,7 @@ describe('createGsapComposable', () => {
   })
 
   it('returns null on the server (SSR guard)', () => {
-    // import.meta.server is false in Vitest's jsdom environment, so we simulate
-    // the SSR path by directly testing the guard condition is present in the
-    // factory. The real guard runs at build-time via Vite's define replacement.
-    // This test documents the expected contract: null on server, plugin on client.
     const useMyPlugin = createGsapComposable('MyPlugin')
-    // In jsdom (client env), it should not return null — it will throw because
-    // nuxtApp.$MyPlugin is not set. This confirms the client path is active.
     expect(() => useMyPlugin()).toThrow()
   })
 
@@ -84,20 +77,19 @@ describe('createGsapComposable', () => {
 })
 
 describe('useGsap', () => {
+  beforeEach(() => {
+    mountedCallbacks.length = 0
+    unmountedCallbacks.length = 0
+    watchCallbacks.length = 0
+    nextTickMock.mockClear()
+    vi.restoreAllMocks()
+  })
+
   it('returns the gsap instance', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
-    const result = useGsap()
-    expect(result).toBe(gsap)
-  })
-})
-
-describe('useGsap with setup', () => {
-  beforeEach(() => {
-    mountedCallbacks.length = 0
-    unmountedCallbacks.length = 0
-    vi.restoreAllMocks()
+    expect(useGsap()).toBe(gsap)
   })
 
   it('returns { contextSafe } when called with a setup function', async () => {
@@ -116,21 +108,49 @@ describe('useGsap with setup', () => {
     expect(typeof contextSafe).toBe('function')
   })
 
-  it('contextSafe wraps a handler and calls through when ctx is set', async () => {
+  it('does not register onBeforeRouteLeave', async () => {
+    const { onBeforeRouteLeave } = await import('vue-router')
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+
+    useGsap(() => {})
+
+    expect(onBeforeRouteLeave).not.toHaveBeenCalled()
+  })
+
+  it('creates the GSAP context only after nextTick on mount', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
-    const mockCtx = {
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
       add: vi.fn((fn: () => unknown) => fn()),
       revert: vi.fn(),
       kill: vi.fn(),
       data: [],
-    }
-    vi.spyOn(gsap, 'context').mockReturnValue(mockCtx as unknown as gsap.Context)
+    } as unknown as gsap.Context)
+
+    useGsap(() => {})
+
+    expect(contextSpy).not.toHaveBeenCalled()
+
+    await flushMount()
+
+    expect(nextTickMock).toHaveBeenCalledOnce()
+    expect(contextSpy).toHaveBeenCalledOnce()
+  })
+
+  it('contextSafe wraps a handler and calls through when ctx is set', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: vi.fn(),
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
 
     const { contextSafe } = useGsap(() => {})
-    // Simulate onMounted — triggers runSetup() which sets ctx
-    mountedCallbacks.forEach(cb => cb())
+    await flushMount()
 
     const handler = vi.fn().mockReturnValue('ok')
     const safeHandler = contextSafe(handler)
@@ -139,7 +159,7 @@ describe('useGsap with setup', () => {
     expect(handler).toHaveBeenCalledOnce()
   })
 
-  it('reverts context on unmount', async () => {
+  it('reverts context exactly once on unmount', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
@@ -152,228 +172,46 @@ describe('useGsap with setup', () => {
     } as unknown as gsap.Context)
 
     useGsap(() => {})
-    // Simulate mount, then dispose
-    mountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).not.toHaveBeenCalled()
+    await flushMount()
 
     unmountedCallbacks.forEach(cb => cb())
+    unmountedCallbacks.forEach(cb => cb())
+
     expect(revertSpy).toHaveBeenCalledOnce()
+  })
+
+  it('does not create a context if unmounted before nextTick resolves', async () => {
+    nextTickMock.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          queueMicrotask(resolve)
+        }),
+    )
+
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
+      add: vi.fn((fn: () => unknown) => fn()),
+      revert: vi.fn(),
+      kill: vi.fn(),
+      data: [],
+    } as unknown as gsap.Context)
+
+    useGsap(() => {})
+
+    const pendingMount = Promise.all(mountedCallbacks.map(cb => cb()))
+    unmountedCallbacks.forEach(cb => cb())
+    await pendingMount
+
+    expect(contextSpy).not.toHaveBeenCalled()
   })
 
   it('backward compat: useGsap() without args still returns the raw gsap instance', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
+
     expect(useGsap()).toBe(gsap)
-  })
-})
-
-describe('useGsap cleanupOn option', () => {
-  beforeEach(() => {
-    mountedCallbacks.length = 0
-    unmountedCallbacks.length = 0
-    routeLeaveCallbacks.length = 0
-    transitionFinishCallbacks.length = 0
-    vi.clearAllMocks()
-  })
-
-  it('registers onBeforeRouteLeave for every useGsap(setup) call', async () => {
-    const { onBeforeRouteLeave } = await import('vue-router')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-
-    useGsap(() => {})
-
-    expect(onBeforeRouteLeave).toHaveBeenCalledOnce()
-  })
-
-  it('registers onBeforeRouteLeave when cleanupOn is route-leave', async () => {
-    const { useNuxtApp } = await import('#app')
-    const { onBeforeRouteLeave } = await import('vue-router')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-
-    vi.mocked(useNuxtApp).mockReturnValue({
-      hooks: {
-        hookOnce: vi.fn((event: string, cb: () => void) => {
-          if (event === 'page:transition:finish') {
-            transitionFinishCallbacks.push(cb)
-          }
-          return vi.fn()
-        }),
-      },
-    } as unknown as ReturnType<typeof useNuxtApp>)
-
-    useGsap(() => {}, { cleanupOn: 'route-leave' })
-
-    expect(onBeforeRouteLeave).toHaveBeenCalledOnce()
-  })
-
-  it('reverts context on route leave when cleanupOn is route-leave', async () => {
-    const { useNuxtApp } = await import('#app')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    vi.mocked(useNuxtApp).mockReturnValue({
-      hooks: {
-        hookOnce: vi.fn((event: string, cb: () => void) => {
-          if (event === 'page:transition:finish') {
-            transitionFinishCallbacks.push(cb)
-          }
-          return vi.fn()
-        }),
-      },
-    } as unknown as ReturnType<typeof useNuxtApp>)
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
-
-    useGsap(() => {}, { cleanupOn: 'route-leave' })
-    mountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // Simulate route leave from a page with a transition
-    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
-    // Then simulate the page:transition:finish hook
-    transitionFinishCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
-  })
-
-  it('default (no cleanupOn): defers revert to page:transition:finish on navigation', async () => {
-    const { useNuxtApp } = await import('#app')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    vi.mocked(useNuxtApp).mockReturnValue({
-      hooks: {
-        hookOnce: vi.fn((event: string, cb: () => void) => {
-          if (event === 'page:transition:finish') {
-            transitionFinishCallbacks.push(cb)
-          }
-          return vi.fn()
-        }),
-      },
-    } as unknown as ReturnType<typeof useNuxtApp>)
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
-
-    useGsap(() => {}) // no cleanupOn option
-    mountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // Leaving a page with a transition → defers to page:transition:finish
-    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
-    transitionFinishCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
-  })
-
-  it('skips onUnmounted revert when component unmounts during navigation', async () => {
-    const { useNuxtApp } = await import('#app')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    vi.mocked(useNuxtApp).mockReturnValue({
-      hooks: {
-        hookOnce: vi.fn((event: string, cb: () => void) => {
-          if (event === 'page:transition:finish') {
-            transitionFinishCallbacks.push(cb)
-          }
-          return vi.fn()
-        }),
-      },
-    } as unknown as ReturnType<typeof useNuxtApp>)
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
-
-    useGsap(() => {})
-    mountedCallbacks.forEach(cb => cb())
-
-    // Simulate route leave from a page with a transition (sets isLeavingViaRoute = true)
-    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
-
-    // Component unmounts (leave transition ended) before transition:finish — revert must NOT fire
-    unmountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // Transition finishes — revert fires now
-    transitionFinishCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
-  })
-
-  it('does not double-revert on unmount after page:transition:finish already ran', async () => {
-    const { useNuxtApp } = await import('#app')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    vi.mocked(useNuxtApp).mockReturnValue({
-      hooks: {
-        hookOnce: vi.fn((event: string, cb: () => void) => {
-          if (event === 'page:transition:finish') {
-            transitionFinishCallbacks.push(cb)
-          }
-          return vi.fn()
-        }),
-      },
-    } as unknown as ReturnType<typeof useNuxtApp>)
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
-
-    useGsap(() => {}, { cleanupOn: 'route-leave' })
-    mountedCallbacks.forEach(cb => cb())
-
-    // Simulate route leave from a page with a transition, then page:transition:finish (sets ctx to null)
-    routeLeaveCallbacks.forEach(cb => cb({}, { meta: { pageTransition: { name: 'page' } } }))
-    transitionFinishCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
-
-    // Scope dispose after — revert should NOT be called again (ctx is null)
-    unmountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
-  })
-
-  it('reverts context immediately in onUnmounted when leaving page has no transition', async () => {
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
-
-    useGsap(() => {})
-    mountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // Route leave with no pageTransition in meta — willTransition is false, hookOnce NOT registered
-    routeLeaveCallbacks.forEach(cb => cb({}, { meta: {} }))
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // onUnmounted fires — reverts immediately (isLeavingViaRoute stayed false)
-    unmountedCallbacks.forEach(cb => cb())
-    expect(revertSpy).toHaveBeenCalledOnce()
   })
 })
 
@@ -382,12 +220,12 @@ describe('useGsap options', () => {
     mountedCallbacks.length = 0
     unmountedCallbacks.length = 0
     watchCallbacks.length = 0
+    nextTickMock.mockClear()
     vi.restoreAllMocks()
   })
 
   it('registers a watcher when dependencies option is provided', async () => {
-    const { watch } = await import('vue')
-    const { ref } = await import('vue')
+    const { watch, ref } = await import('vue')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
 
     const dep = ref(0)
@@ -396,13 +234,48 @@ describe('useGsap options', () => {
     expect(watch).toHaveBeenCalledOnce()
   })
 
-  it('does not revert context on dependency update when revertOnUpdate is false', async () => {
+  it('re-runs setup after nextTick when dependencies change', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    const { ref } = await import('vue')
+
+    const firstRevertSpy = vi.fn()
+    const secondRevertSpy = vi.fn()
+    const contextSpy = vi.spyOn(gsap, 'context')
+      .mockReturnValueOnce({
+        add: vi.fn((fn: () => unknown) => fn()),
+        revert: firstRevertSpy,
+        kill: vi.fn(),
+        data: [],
+      } as unknown as gsap.Context)
+      .mockReturnValueOnce({
+        add: vi.fn((fn: () => unknown) => fn()),
+        revert: secondRevertSpy,
+        kill: vi.fn(),
+        data: [],
+      } as unknown as gsap.Context)
+
+    const dep = ref(0)
+    useGsap(() => {}, { dependencies: dep })
+    await flushMount()
+
+    expect(contextSpy).toHaveBeenCalledTimes(1)
+
+    await flushWatch()
+
+    expect(firstRevertSpy).toHaveBeenCalledOnce()
+    expect(nextTickMock).toHaveBeenCalledTimes(2)
+    expect(contextSpy).toHaveBeenCalledTimes(2)
+    expect(secondRevertSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not revert or re-run setup on dependency update when revertOnUpdate is false', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
     const { ref } = await import('vue')
 
     const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
       add: vi.fn((fn: () => unknown) => fn()),
       revert: revertSpy,
       kill: vi.fn(),
@@ -411,11 +284,48 @@ describe('useGsap options', () => {
 
     const dep = ref(0)
     useGsap(() => {}, { dependencies: dep, revertOnUpdate: false })
-    mountedCallbacks.forEach(cb => cb())
+    await flushMount()
+    await flushWatch()
 
-    // Trigger the watch callback — revert must NOT be called
-    watchCallbacks.forEach(cb => cb())
     expect(revertSpy).not.toHaveBeenCalled()
+    expect(contextSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('deduplicates rapid dependency updates and keeps only the latest scheduled setup', async () => {
+    nextTickMock.mockImplementation(() => Promise.resolve())
+
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    const { ref } = await import('vue')
+
+    const firstRevertSpy = vi.fn()
+    const secondRevertSpy = vi.fn()
+    const contextSpy = vi.spyOn(gsap, 'context')
+      .mockReturnValueOnce({
+        add: vi.fn((fn: () => unknown) => fn()),
+        revert: firstRevertSpy,
+        kill: vi.fn(),
+        data: [],
+      } as unknown as gsap.Context)
+      .mockReturnValueOnce({
+        add: vi.fn((fn: () => unknown) => fn()),
+        revert: secondRevertSpy,
+        kill: vi.fn(),
+        data: [],
+      } as unknown as gsap.Context)
+
+    const dep = ref(0)
+    useGsap(() => {}, { dependencies: dep })
+    await flushMount()
+
+    const watchCallback = watchCallbacks[0]!
+    const firstUpdate = watchCallback()
+    const secondUpdate = watchCallback()
+    await Promise.all([firstUpdate, secondUpdate])
+
+    expect(firstRevertSpy).toHaveBeenCalledOnce()
+    expect(contextSpy).toHaveBeenCalledTimes(2)
+    expect(secondRevertSpy).not.toHaveBeenCalled()
   })
 
   it('passes scope element to gsap.context when scope option is provided', async () => {
@@ -432,8 +342,8 @@ describe('useGsap options', () => {
 
     const el = {} as HTMLElement
     const scopeRef = ref<HTMLElement | null>(el)
-    useGsap(() => {}, { scope: scopeRef })
-    mountedCallbacks.forEach(cb => cb())
+    useGsap(() => {}, { scope: scopeRef, cleanupOn: 'route-leave' })
+    await flushMount()
 
     expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), el)
   })

@@ -48,9 +48,8 @@ const phase = computed(() => {
 })
 
 // pageTransition: false → this page has no transition.
-// willTransition evaluates to false in onBeforeRouteLeave, so
-// the GSAP context is reverted immediately in onUnmounted rather
-// than waiting for page:transition:finish (which would never fire).
+// `useGsap(setup)` still cleans up in `onUnmounted`, so navigating back
+// should restart the animation from a clean context.
 definePageMeta({ pageTransition: false })
 </script>
 
@@ -62,14 +61,13 @@ definePageMeta({ pageTransition: false })
         This page has <code>pageTransition: false</code>.<br>
         Click <em>← Back</em> mid-animation: the page snaps away instantly
         (no transition), then navigate back — the animation should restart
-        from the beginning, confirming the context was cleanly reverted in
-        <code>onUnmounted</code>.<br>
+        from the beginning, confirming the context was cleanly reverted during
+        teardown.<br>
         Compare with
         <NuxtLink
           to="/use-gsap-timeline"
           class="inline-link"
-        >useGsap (timeline)</NuxtLink>
-        where the animation plays <em>through</em> the 1s page-fade.
+        >useGsap (timeline)</NuxtLink>.
       </p>
       <NuxtLink
         to="/"
