@@ -70,8 +70,7 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null
-  let setupVersion = 0
-  let isUnmounted = false
+  let cancelPending: (() => void) | null = null
 
   const clearContext = () => {
     ctx?.revert()
@@ -79,13 +78,14 @@ export function useGsap(
   }
 
   const scheduleSetup = async () => {
-    const version = ++setupVersion
+    cancelPending?.()
+    let cancelled = false
+    cancelPending = () => { cancelled = true }
+
     await nextTick()
+    if (cancelled) return
 
-    if (isUnmounted || version !== setupVersion) {
-      return
-    }
-
+    cancelPending = null
     const scope = options?.scope?.value ?? undefined
     ctx = gsap.context(setup, scope)
   }
@@ -110,8 +110,7 @@ export function useGsap(
   }
 
   onUnmounted(() => {
-    isUnmounted = true
-    setupVersion++
+    cancelPending?.()
     clearContext()
   })
 
