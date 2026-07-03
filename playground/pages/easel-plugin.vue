@@ -3,8 +3,10 @@ const easelContainer = ref<HTMLCanvasElement | null>(null)
 let ticker: (() => void) | null = null
 let tween: gsap.core.Tween | null = null
 
+let script: HTMLScriptElement | null = null
+
 onMounted(() => {
-  const script = document.createElement('script')
+  script = document.createElement('script')
   script.src = 'https://code.createjs.com/easeljs-0.8.2.min.js'
   script.onload = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,8 +35,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (ticker) gsap.ticker.remove(ticker)
   tween?.kill()
+  if (script) document.head.removeChild(script)
   ticker = null
   tween = null
+  script = null
 })
 
 definePageMeta({ pageTransition })

@@ -3,9 +3,10 @@ const appRef = ref<HTMLElement | null>(null)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pixiApp: any = null
 let pixiTween: gsap.core.Tween | null = null
+let script: HTMLScriptElement | null = null
 
 onMounted(() => {
-  const script = document.createElement('script')
+  script = document.createElement('script')
   script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js'
   script.onload = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,8 +33,10 @@ onMounted(() => {
 onUnmounted(() => {
   pixiTween?.kill()
   pixiApp?.destroy(true)
+  if (script) document.head.removeChild(script)
   pixiTween = null
   pixiApp = null
+  script = null
 })
 
 definePageMeta({ pageTransition })

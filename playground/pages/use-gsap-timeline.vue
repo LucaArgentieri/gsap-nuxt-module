@@ -156,7 +156,7 @@ h1 {
   background: #88ce02;
   border-radius: 8px;
   flex-shrink: 0;
-  will-change: transform, background-color;
+  will-change: transform;
 }
 
 .progress-panel {
