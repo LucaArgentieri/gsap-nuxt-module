@@ -12,8 +12,9 @@
 <script setup lang="ts">
 const boxRef = ref<HTMLElement | null>(null)
 
-// `cleanupOn` is accepted for backward compatibility, but cleanup still happens
-// during component teardown.
+// `cleanupOn` is accepted for backward compatibility but is a no-op: cleanup
+// runs in `onUnmounted`, which Nuxt fires only after the page's leave
+// transition finishes.
 useGsap(
   () => {
     gsap.to(boxRef.value, { x: 200, duration: 1, repeat: -1, yoyo: true })

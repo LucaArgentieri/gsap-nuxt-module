@@ -1,6 +1,6 @@
 import { gsap } from 'gsap'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { createGsapComposable } from '../create-gsap-composable'
 
 /**
@@ -20,7 +20,9 @@ export interface UseGsapOptions {
    * When to revert the GSAP context during page navigation.
    *
    * @deprecated This option is ignored and kept only for backward compatibility.
-   * Cleanup always happens during component teardown via `onUnmounted`.
+   * Cleanup always happens in `onUnmounted`. For pages this is already
+   * transition-aware: Nuxt unmounts the leaving page only after its leave
+   * transition finishes, so animations play through the fade-out either way.
    *
    * @example
    * // `cleanupOn` is ignored, but still accepted for compatibility
@@ -45,8 +47,10 @@ export function useGsap(): typeof gsap
  * Setup-function overload — wraps `gsap.context()` with automatic revert.
  *
  * Animations declared inside `setup` are scoped to the optional `scope` element
- * and are reverted automatically when the component unmounts (or the effect scope
- * is disposed). Pass `dependencies` to re-run `setup` reactively.
+ * and are reverted automatically in `onUnmounted`. For a leaving page, Nuxt
+ * fires `onUnmounted` only after the leave transition finishes, so animations
+ * play through the fade-out before cleanup runs. Pass `dependencies` to re-run
+ * `setup` reactively.
  *
  * Returns `{ contextSafe }` — a wrapper for event handlers that need to add
  * animations to the existing context after mount.
@@ -70,28 +74,19 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null
-  let cancelPending: (() => void) | null = null
+
+  const runSetup = () => {
+    const scope = options?.scope?.value ?? undefined
+    ctx = gsap.context(setup, scope)
+  }
 
   const clearContext = () => {
     ctx?.revert()
     ctx = null
   }
 
-  const scheduleSetup = async () => {
-    cancelPending?.()
-    let cancelled = false
-    cancelPending = () => { cancelled = true }
-
-    await nextTick()
-    if (cancelled) return
-
-    cancelPending = null
-    const scope = options?.scope?.value ?? undefined
-    ctx = gsap.context(setup, scope)
-  }
-
   onMounted(() => {
-    void scheduleSetup()
+    runSetup()
   })
 
   if (options?.dependencies !== undefined) {
@@ -103,14 +98,19 @@ export function useGsap(
       () => {
         if (options.revertOnUpdate === false) return
         clearContext()
-        void scheduleSetup()
+        runSetup()
       },
       { flush: 'post' },
     )
   }
 
+  // No route hooks needed: Nuxt's page wrapper flushes a leaving page's
+  // `unmounted` hooks only after the leave transition completes (measured on
+  // Nuxt 4 / Vue 3.5: `onUnmounted` fires together with
+  // `page:transition:finish`), so this revert never interrupts a transition.
+  // Note this deferral is a Nuxt page behavior — `onScopeDispose` or a bare
+  // Vue `<Transition>` around a component would tear down at leave *start*.
   onUnmounted(() => {
-    cancelPending?.()
     clearContext()
   })
 

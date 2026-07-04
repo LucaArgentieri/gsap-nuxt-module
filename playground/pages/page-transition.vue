@@ -39,8 +39,8 @@ definePageMeta({
 <template>
   <div class="page-container">
     <header>
-      <h1>Page Transition + Teardown Cleanup</h1>
-      <p>Navigate away to verify that both examples are cleaned up during component teardown.</p>
+      <h1>Page Transition + Deferred Cleanup</h1>
+      <p>Navigate away: both columns keep animating through the fade-out, then clean up when the transition finishes.</p>
     </header>
 
     <div class="columns">
@@ -51,7 +51,8 @@ definePageMeta({
         <h2>Deprecated `cleanupOn`</h2>
         <p>
           This example still passes <code>cleanupOn: 'route-leave'</code>, but the option is ignored.
-          Cleanup happens during teardown, just like the default path.
+          Like the default path, the revert runs in <code>onUnmounted</code> after the leave
+          transition — boxes keep bouncing <strong>through</strong> the fade-out.
         </p>
         <div class="boxes">
           <div class="box box-a" />
@@ -66,8 +67,9 @@ definePageMeta({
       >
         <h2>Default behavior</h2>
         <p>
-          The default setup follows the same behavior: the GSAP context is reverted when the
-          component is torn down, with no route-leave hook involved.
+          The default setup: Nuxt unmounts this page only after the leave transition finishes,
+          so the context reverts after the fade — boxes keep bouncing <strong>through</strong>
+          the fade-out, then stop.
         </p>
         <div class="boxes">
           <div class="box box-b" />

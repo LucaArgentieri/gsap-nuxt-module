@@ -5,19 +5,19 @@ vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
 }))
 
-const mountedCallbacks: Array<() => void | Promise<void>> = []
+// Intercept Vue lifecycle hooks so they can be triggered manually in tests.
+// This avoids needing @vue/test-utils while keeping tests isolated.
+const mountedCallbacks: Array<() => void> = []
 const unmountedCallbacks: Array<() => void> = []
-const watchCallbacks: Array<() => void | Promise<void>> = []
-const nextTickMock = vi.fn(() => Promise.resolve())
+const watchCallbacks: Array<() => void> = []
 
 vi.mock('vue', async () => {
   const actual = await vi.importActual<typeof import('vue')>('vue')
   return {
     ...actual,
-    nextTick: nextTickMock,
-    onMounted: vi.fn((cb: () => void | Promise<void>) => { mountedCallbacks.push(cb) }),
+    onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
     onUnmounted: vi.fn((cb: () => void) => { unmountedCallbacks.push(cb) }),
-    watch: vi.fn((_sources: unknown, cb: () => void | Promise<void>) => { watchCallbacks.push(cb) }),
+    watch: vi.fn((_sources: unknown, cb: () => void) => { watchCallbacks.push(cb) }),
   }
 })
 
@@ -25,12 +25,28 @@ vi.mock('vue-router', () => ({
   onBeforeRouteLeave: vi.fn(),
 }))
 
-const flushMount = async () => {
-  await Promise.all(mountedCallbacks.map(cb => cb()))
+const mount = () => {
+  mountedCallbacks.forEach(cb => cb())
+}
+const unmount = () => {
+  unmountedCallbacks.forEach(cb => cb())
+}
+const triggerWatch = () => {
+  watchCallbacks.forEach(cb => cb())
 }
 
-const flushWatch = async () => {
-  await Promise.all(watchCallbacks.map(cb => cb()))
+const mockContext = (revert = vi.fn()) => ({
+  add: vi.fn((fn: () => unknown) => fn()),
+  revert,
+  kill: vi.fn(),
+  data: [],
+} as unknown as gsap.Context)
+
+const resetLifecycle = () => {
+  mountedCallbacks.length = 0
+  unmountedCallbacks.length = 0
+  watchCallbacks.length = 0
+  vi.restoreAllMocks()
 }
 
 describe('createGsapComposable', () => {
@@ -77,13 +93,7 @@ describe('createGsapComposable', () => {
 })
 
 describe('useGsap', () => {
-  beforeEach(() => {
-    mountedCallbacks.length = 0
-    unmountedCallbacks.length = 0
-    watchCallbacks.length = 0
-    nextTickMock.mockClear()
-    vi.restoreAllMocks()
-  })
+  beforeEach(resetLifecycle)
 
   it('returns the gsap instance', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
@@ -108,7 +118,7 @@ describe('useGsap', () => {
     expect(typeof contextSafe).toBe('function')
   })
 
-  it('does not register onBeforeRouteLeave', async () => {
+  it('does not register any router hooks', async () => {
     const { onBeforeRouteLeave } = await import('vue-router')
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
 
@@ -117,24 +127,18 @@ describe('useGsap', () => {
     expect(onBeforeRouteLeave).not.toHaveBeenCalled()
   })
 
-  it('creates the GSAP context only after nextTick on mount', async () => {
+  it('creates the GSAP context synchronously on mount', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
-    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: vi.fn(),
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
 
     useGsap(() => {})
 
     expect(contextSpy).not.toHaveBeenCalled()
 
-    await flushMount()
+    mount()
 
-    expect(nextTickMock).toHaveBeenCalledOnce()
     expect(contextSpy).toHaveBeenCalledOnce()
   })
 
@@ -142,15 +146,10 @@ describe('useGsap', () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: vi.fn(),
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
 
     const { contextSafe } = useGsap(() => {})
-    await flushMount()
+    mount()
 
     const handler = vi.fn().mockReturnValue('ok')
     const safeHandler = contextSafe(handler)
@@ -164,47 +163,29 @@ describe('useGsap', () => {
     const { gsap } = await import('gsap')
 
     const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
     useGsap(() => {})
-    await flushMount()
+    mount()
 
-    unmountedCallbacks.forEach(cb => cb())
-    unmountedCallbacks.forEach(cb => cb())
+    unmount()
+    unmount()
 
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
-  it('does not create a context if unmounted before nextTick resolves', async () => {
-    nextTickMock.mockImplementationOnce(
-      () =>
-        new Promise(resolve => {
-          queueMicrotask(resolve)
-        }),
-    )
-
+  it('does not revert anything if unmounted before mount', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
-    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: vi.fn(),
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    const revertSpy = vi.fn()
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
     useGsap(() => {})
-
-    const pendingMount = Promise.all(mountedCallbacks.map(cb => cb()))
-    unmountedCallbacks.forEach(cb => cb())
-    await pendingMount
+    unmount()
 
     expect(contextSpy).not.toHaveBeenCalled()
+    expect(revertSpy).not.toHaveBeenCalled()
   })
 
   it('backward compat: useGsap() without args still returns the raw gsap instance', async () => {
@@ -216,13 +197,7 @@ describe('useGsap', () => {
 })
 
 describe('useGsap options', () => {
-  beforeEach(() => {
-    mountedCallbacks.length = 0
-    unmountedCallbacks.length = 0
-    watchCallbacks.length = 0
-    nextTickMock.mockClear()
-    vi.restoreAllMocks()
-  })
+  beforeEach(resetLifecycle)
 
   it('registers a watcher when dependencies option is provided', async () => {
     const { watch, ref } = await import('vue')
@@ -234,7 +209,7 @@ describe('useGsap options', () => {
     expect(watch).toHaveBeenCalledOnce()
   })
 
-  it('re-runs setup after nextTick when dependencies change', async () => {
+  it('reverts the old context and re-runs setup when dependencies change', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
     const { ref } = await import('vue')
@@ -242,29 +217,18 @@ describe('useGsap options', () => {
     const firstRevertSpy = vi.fn()
     const secondRevertSpy = vi.fn()
     const contextSpy = vi.spyOn(gsap, 'context')
-      .mockReturnValueOnce({
-        add: vi.fn((fn: () => unknown) => fn()),
-        revert: firstRevertSpy,
-        kill: vi.fn(),
-        data: [],
-      } as unknown as gsap.Context)
-      .mockReturnValueOnce({
-        add: vi.fn((fn: () => unknown) => fn()),
-        revert: secondRevertSpy,
-        kill: vi.fn(),
-        data: [],
-      } as unknown as gsap.Context)
+      .mockReturnValueOnce(mockContext(firstRevertSpy))
+      .mockReturnValueOnce(mockContext(secondRevertSpy))
 
     const dep = ref(0)
     useGsap(() => {}, { dependencies: dep })
-    await flushMount()
+    mount()
 
     expect(contextSpy).toHaveBeenCalledTimes(1)
 
-    await flushWatch()
+    triggerWatch()
 
     expect(firstRevertSpy).toHaveBeenCalledOnce()
-    expect(nextTickMock).toHaveBeenCalledTimes(2)
     expect(contextSpy).toHaveBeenCalledTimes(2)
     expect(secondRevertSpy).not.toHaveBeenCalled()
   })
@@ -275,57 +239,15 @@ describe('useGsap options', () => {
     const { ref } = await import('vue')
 
     const revertSpy = vi.fn()
-    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: revertSpy,
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
     const dep = ref(0)
     useGsap(() => {}, { dependencies: dep, revertOnUpdate: false })
-    await flushMount()
-    await flushWatch()
+    mount()
+    triggerWatch()
 
     expect(revertSpy).not.toHaveBeenCalled()
     expect(contextSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('deduplicates rapid dependency updates and keeps only the latest scheduled setup', async () => {
-    nextTickMock.mockImplementation(() => Promise.resolve())
-
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-    const { ref } = await import('vue')
-
-    const firstRevertSpy = vi.fn()
-    const secondRevertSpy = vi.fn()
-    const contextSpy = vi.spyOn(gsap, 'context')
-      .mockReturnValueOnce({
-        add: vi.fn((fn: () => unknown) => fn()),
-        revert: firstRevertSpy,
-        kill: vi.fn(),
-        data: [],
-      } as unknown as gsap.Context)
-      .mockReturnValueOnce({
-        add: vi.fn((fn: () => unknown) => fn()),
-        revert: secondRevertSpy,
-        kill: vi.fn(),
-        data: [],
-      } as unknown as gsap.Context)
-
-    const dep = ref(0)
-    useGsap(() => {}, { dependencies: dep })
-    await flushMount()
-
-    const watchCallback = watchCallbacks[0]!
-    const firstUpdate = watchCallback()
-    const secondUpdate = watchCallback()
-    await Promise.all([firstUpdate, secondUpdate])
-
-    expect(firstRevertSpy).toHaveBeenCalledOnce()
-    expect(contextSpy).toHaveBeenCalledTimes(2)
-    expect(secondRevertSpy).not.toHaveBeenCalled()
   })
 
   it('passes scope element to gsap.context when scope option is provided', async () => {
@@ -333,17 +255,12 @@ describe('useGsap options', () => {
     const { gsap } = await import('gsap')
     const { ref } = await import('vue')
 
-    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue({
-      add: vi.fn((fn: () => unknown) => fn()),
-      revert: vi.fn(),
-      kill: vi.fn(),
-      data: [],
-    } as unknown as gsap.Context)
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
 
     const el = {} as HTMLElement
     const scopeRef = ref<HTMLElement | null>(el)
     useGsap(() => {}, { scope: scopeRef, cleanupOn: 'route-leave' })
-    await flushMount()
+    mount()
 
     expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), el)
   })
