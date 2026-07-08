@@ -27,23 +27,22 @@ export default defineNuxtPlugin({
       resolvePlugin(plugin)
     }
 
-    // Load and register all plugins
+    // Validate all plugins exist before loading any
     for (const pluginName of resolvedPlugins) {
-      const loader = gsapPlugins[pluginName]
-      if (!loader) {
+      if (!gsapPlugins[pluginName]) {
         throw new Error(
           `[gsap-nuxt-module] Plugin "${pluginName}" not found. Available plugins: ${Object.keys(gsapPlugins).join(', ')}`,
         )
       }
+    }
 
-      try {
-        const plugin = await loader()
+    // Load and register all plugins in parallel
+    await Promise.all(
+      [...resolvedPlugins].map(async (pluginName) => {
+        const plugin = await gsapPlugins[pluginName]()
         gsap.registerPlugin(plugin)
         nuxtApp.provide(pluginName, plugin)
-      }
-      catch (err) {
-        console.error(`[gsap-nuxt-module] Failed to load plugin "${pluginName}":`, err)
-      }
-    }
+      }),
+    )
   },
 })

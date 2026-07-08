@@ -1,9 +1,9 @@
-const transitionState = reactive({
-  transitionComplete: false,
-})
-
 export const usePageTransition = () => {
-  const toggleTransitionComplete = (value) => {
+  const transitionState = reactive({
+    transitionComplete: false,
+  })
+
+  const toggleTransitionComplete = (value: boolean) => {
     transitionState.transitionComplete = value
   }
 

@@ -38,6 +38,8 @@ onMounted(() => {
 onUnmounted(() => {
   helper?.kill()
   tween?.kill()
+  helper = null
+  tween = null
 })
 
 definePageMeta({ pageTransition })

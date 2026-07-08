@@ -26,7 +26,6 @@ onMounted(() => {
         trigger: nuxtLogo,
         start: 'top+=100px center',
         end: 'bottom center',
-        markers: true,
       },
     },
   )
@@ -43,7 +42,6 @@ onMounted(() => {
         start: 'top center',
         end: 'bottom center',
         scrub: true,
-        markers: true,
       },
     },
   )
