@@ -1,10 +1,12 @@
 import { useNuxtApp } from '#app'
 import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
 import { gsap } from 'gsap'
-import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { onMounted, onUnmounted, watch } from 'vue'
+import type { WatchSource } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { createGsapComposable } from '../create-gsap-composable'
+import type { GsapScope } from '../utils/element'
+import { unrefElement } from '../utils/element'
 
 /**
  * Wraps an event handler so it runs inside the active GSAP context.
@@ -16,7 +18,15 @@ import { createGsapComposable } from '../create-gsap-composable'
 type ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F) => F
 
 export interface UseGsapOptions {
-  scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>
+  /**
+   * Element the GSAP context's CSS selectors are scoped to. Accepts a plain
+   * element, a template ref, or a component ref (its root `$el` is used).
+   *
+   * Defaults to the current component's root element, so selectors never leak
+   * to same-class elements in other components. Pass `scope: null` to opt out
+   * and match selectors globally.
+   */
+  scope?: GsapScope
   dependencies?: WatchSource | WatchSource[]
   revertOnUpdate?: boolean
   /**
@@ -51,8 +61,10 @@ export function useGsap(): typeof gsap
 /**
  * Setup-function overload — wraps `gsap.context()` with automatic revert.
  *
- * Animations declared inside `setup` are scoped to the optional `scope` element
- * and are reverted automatically on teardown. When the leaving page has a
+ * Animations declared inside `setup` are scoped to the `scope` element — by
+ * default the current component's root element (pass `scope: null` for a
+ * global, unscoped context) — and are reverted automatically on teardown.
+ * When the leaving page has a
  * transition, the revert is deferred to Nuxt's `page:transition:finish` hook so
  * animations play through the fade-out; otherwise it runs in `onUnmounted`.
  * Pass `dependencies` to re-run `setup` reactively.
@@ -82,8 +94,14 @@ export function useGsap(
   let isLeavingViaRoute = false
   let isUnmounted = false
 
+  // Captured at call time: `scope` defaults to the calling component's root
+  // element so selectors stay contained without explicit wiring.
+  const instance = getCurrentInstance()
+
   const runSetup = () => {
-    const scope = options?.scope?.value ?? undefined
+    const scope = options?.scope !== undefined
+      ? unrefElement(options.scope)
+      : unrefElement(instance?.proxy)
     ctx = gsap.context(setup, scope)
   }
 

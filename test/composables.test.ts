@@ -18,6 +18,9 @@ type RouteLeaveCallback = (to: unknown, from: { meta: Record<string, unknown> })
 const routeLeaveCallbacks: RouteLeaveCallback[] = []
 const transitionFinishCallbacks: Array<() => void> = []
 
+// Controllable current-instance mock for auto-scope specs
+let currentInstance: { proxy: { $el: unknown } } | null = null
+
 vi.mock('vue', async () => {
   const actual = await vi.importActual<typeof import('vue')>('vue')
   return {
@@ -25,6 +28,7 @@ vi.mock('vue', async () => {
     onMounted: vi.fn((cb: () => void) => { mountedCallbacks.push(cb) }),
     onUnmounted: vi.fn((cb: () => void) => { unmountedCallbacks.push(cb) }),
     watch: vi.fn((_sources: unknown, cb: () => void) => { watchCallbacks.push(cb) }),
+    getCurrentInstance: vi.fn(() => currentInstance),
   }
 })
 
@@ -75,6 +79,7 @@ const resetLifecycle = () => {
   watchCallbacks.length = 0
   routeLeaveCallbacks.length = 0
   transitionFinishCallbacks.length = 0
+  currentInstance = null
   vi.restoreAllMocks()
   vi.clearAllMocks()
 }
@@ -395,11 +400,99 @@ describe('useGsap options', () => {
 
     const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
 
-    const el = {} as HTMLElement
+    const el = { nodeType: 1 } as unknown as HTMLElement
     const scopeRef = ref<HTMLElement | null>(el)
     useGsap(() => {}, { scope: scopeRef, cleanupOn: 'route-leave' })
     mount()
 
     expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), el)
+  })
+})
+
+describe('useGsap scope resolution', () => {
+  beforeEach(resetLifecycle)
+
+  it('auto-scopes to the current component root element when no scope is passed', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    const rootEl = { nodeType: 1 } as unknown as HTMLElement
+    currentInstance = { proxy: { $el: rootEl } }
+
+    useGsap(() => {})
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), rootEl)
+  })
+
+  it('falls back to global scope when there is no current instance', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    useGsap(() => {})
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), undefined)
+  })
+
+  it('falls back to global scope for fragment roots ($el is a comment node)', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    currentInstance = { proxy: { $el: { nodeType: 8 } } } // comment node
+
+    useGsap(() => {})
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), undefined)
+  })
+
+  it('scope: null opts out of auto-scope (global selectors)', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    currentInstance = { proxy: { $el: { nodeType: 1 } } }
+
+    useGsap(() => {}, { scope: null })
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), undefined)
+  })
+
+  it('accepts a plain element as scope', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    const el = { nodeType: 1 } as unknown as HTMLElement
+    useGsap(() => {}, { scope: el })
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), el)
+  })
+
+  it('resolves a component ref scope to its root $el', async () => {
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+    const { ref } = await import('vue')
+
+    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext())
+
+    const rootEl = { nodeType: 1 } as unknown as HTMLElement
+    const componentRef = ref({ $el: rootEl })
+
+    useGsap(() => {}, { scope: componentRef as never })
+    mount()
+
+    expect(contextSpy).toHaveBeenCalledWith(expect.any(Function), rootEl)
   })
 })
