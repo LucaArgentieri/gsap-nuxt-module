@@ -51,8 +51,9 @@ definePageMeta({
         <h2>Deprecated `cleanupOn`</h2>
         <p>
           This example still passes <code>cleanupOn: 'route-leave'</code>, but the option is ignored.
-          Like the default path, the revert runs in <code>onUnmounted</code> after the leave
-          transition — boxes keep bouncing <strong>through</strong> the fade-out.
+          Like the default path, the revert is deferred to Nuxt's
+          <code>page:transition:finish</code> hook — boxes keep bouncing
+          <strong>through</strong> the fade-out.
         </p>
         <div class="boxes">
           <div class="box box-a" />
@@ -67,9 +68,9 @@ definePageMeta({
       >
         <h2>Default behavior</h2>
         <p>
-          The default setup: Nuxt unmounts this page only after the leave transition finishes,
-          so the context reverts after the fade — boxes keep bouncing <strong>through</strong>
-          the fade-out, then stop.
+          The default setup: because this page has a transition, the context revert is
+          deferred to <code>page:transition:finish</code> — boxes keep bouncing
+          <strong>through</strong> the fade-out, then stop.
         </p>
         <div class="boxes">
           <div class="box box-b" />

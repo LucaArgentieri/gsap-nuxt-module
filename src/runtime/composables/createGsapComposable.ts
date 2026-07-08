@@ -1,6 +1,9 @@
+import { useNuxtApp } from '#app'
+import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
 import { gsap } from 'gsap'
 import type { ComputedRef, Ref, WatchSource } from 'vue'
 import { onMounted, onUnmounted, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import { createGsapComposable } from '../create-gsap-composable'
 
 /**
@@ -19,13 +22,15 @@ export interface UseGsapOptions {
   /**
    * When to revert the GSAP context during page navigation.
    *
-   * @deprecated This option is ignored and kept only for backward compatibility.
-   * Cleanup always happens in `onUnmounted`. For pages this is already
-   * transition-aware: Nuxt unmounts the leaving page only after its leave
-   * transition finishes, so animations play through the fade-out either way.
+   * @deprecated This option has no behavioral effect. Both `'unmount'` and
+   * `'route-leave'` produce identical behavior: when the leaving page has a
+   * transition defined (per-page `definePageMeta({ pageTransition })` or a
+   * global `app.pageTransition` in `nuxt.config`), the GSAP context revert is
+   * deferred to Nuxt's `page:transition:finish` hook; otherwise it happens
+   * immediately in `onUnmounted`. Kept for backward compatibility only.
    *
    * @example
-   * // `cleanupOn` is ignored, but still accepted for compatibility
+   * // Continuous animation that plays through the page-leave transition
    * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
    */
   cleanupOn?: 'unmount' | 'route-leave'
@@ -47,10 +52,10 @@ export function useGsap(): typeof gsap
  * Setup-function overload — wraps `gsap.context()` with automatic revert.
  *
  * Animations declared inside `setup` are scoped to the optional `scope` element
- * and are reverted automatically in `onUnmounted`. For a leaving page, Nuxt
- * fires `onUnmounted` only after the leave transition finishes, so animations
- * play through the fade-out before cleanup runs. Pass `dependencies` to re-run
- * `setup` reactively.
+ * and are reverted automatically on teardown. When the leaving page has a
+ * transition, the revert is deferred to Nuxt's `page:transition:finish` hook so
+ * animations play through the fade-out; otherwise it runs in `onUnmounted`.
+ * Pass `dependencies` to re-run `setup` reactively.
  *
  * Returns `{ contextSafe }` — a wrapper for event handlers that need to add
  * animations to the existing context after mount.
@@ -74,6 +79,8 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null
+  let isLeavingViaRoute = false
+  let isUnmounted = false
 
   const runSetup = () => {
     const scope = options?.scope?.value ?? undefined
@@ -84,6 +91,32 @@ export function useGsap(
     ctx?.revert()
     ctx = null
   }
+
+  // `onUnmounted` alone is NOT transition-safe: Vue flushes `unmounted` hooks
+  // at leave *start* (vuejs/core#994); any "fires with page:transition:finish"
+  // timing is an emergent artifact of NuxtPage's Suspense + `out-in` mode and
+  // isn't guaranteed. When the leaving page has a transition we defer the
+  // revert explicitly via Nuxt's documented `page:transition:finish` hook.
+  onBeforeRouteLeave((_to, from) => {
+    const willTransition = from.meta.pageTransition !== false
+      && !!(from.meta.pageTransition ?? defaultPageTransition)
+
+    if (willTransition) {
+      isLeavingViaRoute = true
+      const nuxtApp = useNuxtApp()
+      nuxtApp.hooks.hookOnce('page:transition:finish', () => {
+        // A later guard may have cancelled the navigation: the component is
+        // still mounted and its context must stay alive, so only revert once
+        // the unmount actually happened.
+        if (isUnmounted) {
+          clearContext()
+        }
+        else {
+          isLeavingViaRoute = false
+        }
+      })
+    }
+  })
 
   onMounted(() => {
     runSetup()
@@ -104,14 +137,14 @@ export function useGsap(
     )
   }
 
-  // No route hooks needed: Nuxt's page wrapper flushes a leaving page's
-  // `unmounted` hooks only after the leave transition completes (measured on
-  // Nuxt 4 / Vue 3.5: `onUnmounted` fires together with
-  // `page:transition:finish`), so this revert never interrupts a transition.
-  // Note this deferral is a Nuxt page behavior — `onScopeDispose` or a bare
-  // Vue `<Transition>` around a component would tear down at leave *start*.
   onUnmounted(() => {
-    clearContext()
+    isUnmounted = true
+    // No transition pending (non-route unmount, or `pageTransition: false`):
+    // revert immediately. Otherwise the `page:transition:finish` hook above
+    // owns the revert.
+    if (!isLeavingViaRoute) {
+      clearContext()
+    }
   })
 
   const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F): F => {

@@ -47,8 +47,9 @@ const phase = computed(() => {
   return 'Complete'
 })
 
-// pageTransition: false → this page has no transition, so Nuxt unmounts it
-// immediately on navigation and `useGsap(setup)` reverts right away in
+// pageTransition: false → this page has no transition. `willTransition` is
+// false in `onBeforeRouteLeave`, so no `page:transition:finish` hook (which
+// would never fire) is registered and `useGsap(setup)` reverts right away in
 // `onUnmounted`. Navigating back should restart the animation from a clean
 // context.
 definePageMeta({ pageTransition: false })
