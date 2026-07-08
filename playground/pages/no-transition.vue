@@ -47,10 +47,11 @@ const phase = computed(() => {
   return 'Complete'
 })
 
-// pageTransition: false → this page has no transition.
-// willTransition evaluates to false in onBeforeRouteLeave, so
-// the GSAP context is reverted immediately in onUnmounted rather
-// than waiting for page:transition:finish (which would never fire).
+// pageTransition: false → this page has no transition. `willTransition` is
+// false in `onBeforeRouteLeave`, so no `page:transition:finish` hook (which
+// would never fire) is registered and `useGsap(setup)` reverts right away in
+// `onUnmounted`. Navigating back should restart the animation from a clean
+// context.
 definePageMeta({ pageTransition: false })
 </script>
 

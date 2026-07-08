@@ -1,10 +1,12 @@
 import { useNuxtApp } from '#app'
 import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
 import { gsap } from 'gsap'
-import type { ComputedRef, Ref, WatchSource } from 'vue'
-import { onMounted, onUnmounted, watch } from 'vue'
+import type { WatchSource } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { createGsapComposable } from '../create-gsap-composable'
+import type { GsapScope } from '../utils/element'
+import { unrefElement } from '../utils/element'
 
 /**
  * Wraps an event handler so it runs inside the active GSAP context.
@@ -16,7 +18,15 @@ import { createGsapComposable } from '../create-gsap-composable'
 type ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F) => F
 
 export interface UseGsapOptions {
-  scope?: Ref<HTMLElement | null> | ComputedRef<HTMLElement | null>
+  /**
+   * Element the GSAP context's CSS selectors are scoped to. Accepts a plain
+   * element, a template ref, or a component ref (its root `$el` is used).
+   *
+   * Defaults to the current component's root element, so selectors never leak
+   * to same-class elements in other components. Pass `scope: null` to opt out
+   * and match selectors globally.
+   */
+  scope?: GsapScope
   dependencies?: WatchSource | WatchSource[]
   revertOnUpdate?: boolean
   /**
@@ -25,16 +35,12 @@ export interface UseGsapOptions {
    * @deprecated This option has no behavioral effect. Both `'unmount'` and
    * `'route-leave'` produce identical behavior: when the leaving page has a
    * transition defined (per-page `definePageMeta({ pageTransition })` or a
-   * global `app.pageTransition` in `nuxt.config`), the GSAP context is deferred
-   * until `page:transition:finish`; otherwise it reverts immediately in
-   * `onUnmounted`. Kept for backward compatibility only.
-   *
-   * **Note:** if a `router.beforeEach` guard rejects navigation *after*
-   * `onBeforeRouteLeave` fires, `isLeavingViaRoute` is NOT set (the conditional
-   * check for a transition runs in the guard), so the context stays active.
+   * global `app.pageTransition` in `nuxt.config`), the GSAP context revert is
+   * deferred to Nuxt's `page:transition:finish` hook; otherwise it happens
+   * immediately in `onUnmounted`. Kept for backward compatibility only.
    *
    * @example
-   * // Continuous animation that should play through the page-leave transition
+   * // Continuous animation that plays through the page-leave transition
    * useGsap(() => { ... }, { cleanupOn: 'route-leave' })
    */
   cleanupOn?: 'unmount' | 'route-leave'
@@ -55,9 +61,13 @@ export function useGsap(): typeof gsap
 /**
  * Setup-function overload — wraps `gsap.context()` with automatic revert.
  *
- * Animations declared inside `setup` are scoped to the optional `scope` element
- * and are reverted automatically when the component unmounts (or the effect scope
- * is disposed). Pass `dependencies` to re-run `setup` reactively.
+ * Animations declared inside `setup` are scoped to the `scope` element — by
+ * default the current component's root element (pass `scope: null` for a
+ * global, unscoped context) — and are reverted automatically on teardown.
+ * When the leaving page has a
+ * transition, the revert is deferred to Nuxt's `page:transition:finish` hook so
+ * animations play through the fade-out; otherwise it runs in `onUnmounted`.
+ * Pass `dependencies` to re-run `setup` reactively.
  *
  * Returns `{ contextSafe }` — a wrapper for event handlers that need to add
  * animations to the existing context after mount.
@@ -82,12 +92,29 @@ export function useGsap(
 
   let ctx: gsap.Context | null = null
   let isLeavingViaRoute = false
+  let isUnmounted = false
+
+  // Captured at call time: `scope` defaults to the calling component's root
+  // element so selectors stay contained without explicit wiring.
+  const instance = getCurrentInstance()
 
   const runSetup = () => {
-    const scope = options?.scope?.value ?? undefined
+    const scope = options?.scope !== undefined
+      ? unrefElement(options.scope)
+      : unrefElement(instance?.proxy)
     ctx = gsap.context(setup, scope)
   }
 
+  const clearContext = () => {
+    ctx?.revert()
+    ctx = null
+  }
+
+  // `onUnmounted` alone is NOT transition-safe: Vue flushes `unmounted` hooks
+  // at leave *start* (vuejs/core#994); any "fires with page:transition:finish"
+  // timing is an emergent artifact of NuxtPage's Suspense + `out-in` mode and
+  // isn't guaranteed. When the leaving page has a transition we defer the
+  // revert explicitly via Nuxt's documented `page:transition:finish` hook.
   onBeforeRouteLeave((_to, from) => {
     const willTransition = from.meta.pageTransition !== false
       && !!(from.meta.pageTransition ?? defaultPageTransition)
@@ -96,8 +123,15 @@ export function useGsap(
       isLeavingViaRoute = true
       const nuxtApp = useNuxtApp()
       nuxtApp.hooks.hookOnce('page:transition:finish', () => {
-        ctx?.revert()
-        ctx = null
+        // A later guard may have cancelled the navigation: the component is
+        // still mounted and its context must stay alive, so only revert once
+        // the unmount actually happened.
+        if (isUnmounted) {
+          clearContext()
+        }
+        else {
+          isLeavingViaRoute = false
+        }
       })
     }
   })
@@ -114,7 +148,7 @@ export function useGsap(
       deps,
       () => {
         if (options.revertOnUpdate === false) return
-        ctx?.revert()
+        clearContext()
         runSetup()
       },
       { flush: 'post' },
@@ -122,9 +156,12 @@ export function useGsap(
   }
 
   onUnmounted(() => {
+    isUnmounted = true
+    // No transition pending (non-route unmount, or `pageTransition: false`):
+    // revert immediately. Otherwise the `page:transition:finish` hook above
+    // owns the revert.
     if (!isLeavingViaRoute) {
-      ctx?.revert()
-      ctx = null
+      clearContext()
     }
   })
 

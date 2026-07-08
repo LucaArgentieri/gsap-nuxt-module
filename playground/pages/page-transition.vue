@@ -39,8 +39,8 @@ definePageMeta({
 <template>
   <div class="page-container">
     <header>
-      <h1>Page Transition + Cleanup Strategies</h1>
-      <p>Navigate away to see both cleanup strategies in action during the page transition.</p>
+      <h1>Page Transition + Deferred Cleanup</h1>
+      <p>Navigate away: both columns keep animating through the fade-out, then clean up when the transition finishes.</p>
     </header>
 
     <div class="columns">
@@ -48,10 +48,12 @@ definePageMeta({
         ref="containerA"
         class="column"
       >
-        <h2>cleanupOn: 'route-leave'</h2>
+        <h2>Deprecated `cleanupOn`</h2>
         <p>
-          Reverts via <code>onScopeDispose</code> after the leave transition finishes — boxes keep
-          bouncing <strong>through</strong> the fade-out, then stop when the component unmounts.
+          This example still passes <code>cleanupOn: 'route-leave'</code>, but the option is ignored.
+          Like the default path, the revert is deferred to Nuxt's
+          <code>page:transition:finish</code> hook — boxes keep bouncing
+          <strong>through</strong> the fade-out.
         </p>
         <div class="boxes">
           <div class="box box-a" />
@@ -64,10 +66,11 @@ definePageMeta({
         ref="containerB"
         class="column"
       >
-        <h2>cleanupOn: 'unmount' (default)</h2>
+        <h2>Default behavior</h2>
         <p>
-          Reverts via <code>onScopeDispose</code> — boxes keep bouncing <strong>through</strong> the
-          fade-out, then stop when the component unmounts.
+          The default setup: because this page has a transition, the context revert is
+          deferred to <code>page:transition:finish</code> — boxes keep bouncing
+          <strong>through</strong> the fade-out, then stop.
         </p>
         <div class="boxes">
           <div class="box box-b" />
