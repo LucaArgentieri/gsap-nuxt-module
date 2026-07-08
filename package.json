@@ -2,7 +2,10 @@
   "name": "gsap-nuxt-module",
   "version": "1.2.3",
   "description": "GSAP integration for Nuxt.",
-  "repository": "LucaArgentieri/gsap-nuxt-module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LucaArgentieri/gsap-nuxt-module.git"
+  },
   "author": "Luca Argentieri",
   "license": "MIT",
   "type": "module",
