@@ -1,6 +1,33 @@
 # Changelog
 
 
+## v1.2.3
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.2...v1.2.3)
+
+### ⚠️ Behavior change
+
+- **useGsap:** `useGsap(setup)` now auto-scopes CSS class/id selectors to the calling component's root element by default. Previously, without an explicit `scope`, selectors matched globally. If you relied on global selectors, pass `scope: null` to opt out. This is a deliberate departure from `@gsap/react`'s `useGSAP()`, which never scopes selectors unless you pass `scope` explicitly — the Nuxt module can auto-detect the calling component's root via Vue's `getCurrentInstance()`, so it defaults to the safer, scoped behavior instead.
+
+### 🚀 Enhancements
+
+- **useGsap:** Auto-scope contexts to the component root, accept flexible scope targets ([d08f948](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/d08f948))
+
+### 🩹 Fixes
+
+- Address performance issues and antipatterns from project review ([12fa20d](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/12fa20d))
+- **useGsap:** Defer revert via page:transition:finish, drop unmount-timing assumption ([0374ef3](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/0374ef3))
+
+### 💅 Refactors
+
+- **useGsap:** Replace setupVersion/isUnmounted with cancelPending closure ([df1c64f](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/df1c64f))
+- **useGsap:** Run setup synchronously, drop nextTick deferral ([2d63a84](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/2d63a84))
+
+### ❤️ Contributors
+
+- Luca Argentieri <lucaargentieri98@gmail.com>
+- Claude <noreply@anthropic.com>
+
 ## v1.2.2
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.1...v1.2.2)
