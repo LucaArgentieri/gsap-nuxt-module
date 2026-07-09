@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.2.4
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.3...v1.2.4)
+
+### 🩹 Fixes
+
+- **useGsap:** Drop onBeforeRouteLeave for onUnmounted-based transition cleanup ([5304e3c](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/5304e3c))
+
+### 🏡 Chore
+
+- Normalize repository field in package.json ([d9b134b](https://github.com/LucaArgentieri/gsap-nuxt-module/commit/d9b134b))
+
+### ❤️ Contributors
+
+- Luca Argentieri <lucaargentieri98@gmail.com>
+
 ## v1.2.3
 
 [compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.2...v1.2.3)

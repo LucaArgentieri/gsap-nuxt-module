@@ -1,6 +1,6 @@
 {
   "name": "gsap-nuxt-module",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "GSAP integration for Nuxt.",
   "repository": {
     "type": "git",
