@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGsapComposable } from '../src/runtime/create-gsap-composable'
 
+// Controllable current-route mock for route-leave cleanup specs
+const mockRoute: { meta: Record<string, unknown> } = { meta: {} }
+
 vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
+  useRoute: vi.fn(() => mockRoute),
 }))
 
 vi.mock('#build/nuxt.config.mjs', () => ({
@@ -14,8 +18,6 @@ vi.mock('#build/nuxt.config.mjs', () => ({
 const mountedCallbacks: Array<() => void> = []
 const unmountedCallbacks: Array<() => void> = []
 const watchCallbacks: Array<() => void> = []
-type RouteLeaveCallback = (to: unknown, from: { meta: Record<string, unknown> }) => void
-const routeLeaveCallbacks: RouteLeaveCallback[] = []
 const transitionFinishCallbacks: Array<() => void> = []
 
 // Controllable current-instance mock for auto-scope specs
@@ -32,10 +34,6 @@ vi.mock('vue', async () => {
   }
 })
 
-vi.mock('vue-router', () => ({
-  onBeforeRouteLeave: vi.fn((cb: RouteLeaveCallback) => { routeLeaveCallbacks.push(cb) }),
-}))
-
 const mount = () => {
   mountedCallbacks.forEach(cb => cb())
 }
@@ -45,8 +43,8 @@ const unmount = () => {
 const triggerWatch = () => {
   watchCallbacks.forEach(cb => cb())
 }
-const leaveRoute = (meta: Record<string, unknown> = {}) => {
-  routeLeaveCallbacks.forEach(cb => cb({}, { meta }))
+const setRouteMeta = (meta: Record<string, unknown> = {}) => {
+  mockRoute.meta = meta
 }
 const finishTransition = () => {
   transitionFinishCallbacks.forEach(cb => cb())
@@ -77,9 +75,9 @@ const resetLifecycle = () => {
   mountedCallbacks.length = 0
   unmountedCallbacks.length = 0
   watchCallbacks.length = 0
-  routeLeaveCallbacks.length = 0
   transitionFinishCallbacks.length = 0
   currentInstance = null
+  mockRoute.meta = {}
   vi.restoreAllMocks()
   vi.clearAllMocks()
 }
@@ -151,15 +149,6 @@ describe('useGsap', () => {
     const { contextSafe } = useGsap(() => {})
 
     expect(typeof contextSafe).toBe('function')
-  })
-
-  it('registers onBeforeRouteLeave for every useGsap(setup) call', async () => {
-    const { onBeforeRouteLeave } = await import('vue-router')
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-
-    useGsap(() => {})
-
-    expect(onBeforeRouteLeave).toHaveBeenCalledOnce()
   })
 
   it('creates the GSAP context synchronously on mount', async () => {
@@ -234,7 +223,7 @@ describe('useGsap', () => {
 describe('useGsap route-leave cleanup', () => {
   beforeEach(resetLifecycle)
 
-  it('defers revert to page:transition:finish when the leaving page has a transition', async () => {
+  it('defers revert to page:transition:finish when the current route has a transition', async () => {
     await mockNuxtAppHooks()
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
@@ -242,13 +231,10 @@ describe('useGsap route-leave cleanup', () => {
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
+    setRouteMeta({ pageTransition: { name: 'page' } })
     useGsap(() => {})
     mount()
 
-    leaveRoute({ pageTransition: { name: 'page' } })
-
-    // Component unmounts (Vue flushes unmounted hooks at leave start) — the
-    // revert must wait for the transition to finish
     unmount()
     expect(revertSpy).not.toHaveBeenCalled()
 
@@ -256,7 +242,7 @@ describe('useGsap route-leave cleanup', () => {
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
-  it('does not double-revert on unmount after page:transition:finish already ran', async () => {
+  it('does not double-revert if page:transition:finish fires more than once', async () => {
     await mockNuxtAppHooks()
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
@@ -264,10 +250,10 @@ describe('useGsap route-leave cleanup', () => {
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
+    setRouteMeta({ pageTransition: { name: 'page' } })
     useGsap(() => {}, { cleanupOn: 'route-leave' })
     mount()
 
-    leaveRoute({ pageTransition: { name: 'page' } })
     unmount()
     finishTransition()
     finishTransition()
@@ -275,23 +261,21 @@ describe('useGsap route-leave cleanup', () => {
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
-  it('reverts immediately in onUnmounted when the leaving page has no transition', async () => {
+  it('reverts immediately in onUnmounted when the current route has no transition', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
 
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
+    // No pageTransition in meta and appPageTransition is null → willTransition
+    // is false, so no page:transition:finish hook is registered
+    setRouteMeta({})
     useGsap(() => {})
     mount()
 
-    // No pageTransition in meta and appPageTransition is null → willTransition
-    // is false, so no page:transition:finish hook is registered
-    leaveRoute({})
-    expect(transitionFinishCallbacks).toHaveLength(0)
-    expect(revertSpy).not.toHaveBeenCalled()
-
     unmount()
+    expect(transitionFinishCallbacks).toHaveLength(0)
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
@@ -302,39 +286,12 @@ describe('useGsap route-leave cleanup', () => {
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
+    setRouteMeta({ pageTransition: false })
     useGsap(() => {})
     mount()
 
-    leaveRoute({ pageTransition: false })
+    unmount()
     expect(transitionFinishCallbacks).toHaveLength(0)
-
-    unmount()
-    expect(revertSpy).toHaveBeenCalledOnce()
-  })
-
-  it('keeps the context alive when navigation is cancelled after the leave guard', async () => {
-    await mockNuxtAppHooks()
-    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
-    const { gsap } = await import('gsap')
-
-    const revertSpy = vi.fn()
-    vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
-
-    useGsap(() => {})
-    mount()
-
-    // Leave guard runs, but a later guard cancels the navigation: the
-    // component is never unmounted
-    leaveRoute({ pageTransition: { name: 'page' } })
-
-    // A later successful navigation elsewhere fires page:transition:finish —
-    // the stale hook must NOT revert this still-mounted page's context
-    finishTransition()
-    expect(revertSpy).not.toHaveBeenCalled()
-
-    // The page later unmounts without a transition → immediate revert works
-    // again because the leaving state was reset
-    unmount()
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 })
