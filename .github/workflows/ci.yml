@@ -28,6 +28,7 @@ jobs:
         with:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
+      - run: bun run dev:prepare
       - run: bun run test:ssr
 
   browser:
@@ -38,6 +39,7 @@ jobs:
         with:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
+      - run: bun run dev:prepare
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:browser
 
@@ -53,6 +55,7 @@ jobs:
         with:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
+      - run: bun run dev:prepare
       - run: bun run prepack
       - run: bun run test:compat
         env:
