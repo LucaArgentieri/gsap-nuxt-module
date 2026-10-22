@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.3.0 (unreleased)
+## v1.3.0
+
+[compare changes](https://github.com/LucaArgentieri/gsap-nuxt-module/compare/v1.2.4...v1.3.0)
 
 ### Enhancements
 
@@ -10,12 +12,17 @@
 - Add Vitest 5 coverage thresholds, bundle budgets, and Nuxt 3/4 consumer compatibility checks.
 - Split CI into focused quality, SSR, browser, and compatibility jobs.
 - Add agent-oriented repository guidance and `llms.txt` documentation.
+- Align the playground and documentation with the Nuxt UI design system.
 
 ### Fixes
 
 - Re-run reactive GSAP setups when `revertOnUpdate` is false while retaining all contexts for final cleanup.
 - Capture the leaving route's transition setting before the destination route can replace it.
 - Clean up GSAP contexts reliably when redirects or rapid navigation interrupt a page transition.
+
+### Contributors
+
+- Luca Argentieri <lucaargentieri98@gmail.com>
 
 
 ## v1.2.4
