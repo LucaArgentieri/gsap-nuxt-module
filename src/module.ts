@@ -1,9 +1,15 @@
-import { defineNuxtModule, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
-import type { gsapPlugins } from './runtime/gsap-plugins'
+import { addImportsDir, addPluginTemplate, addTemplate, createResolver, defineNuxtModule } from '@nuxt/kit'
+import { renderGSAPPlugin, resolveGSAPPlugins } from './plugin-catalog'
+import type { GSAPPluginName } from './plugin-catalog'
 
-export type GSAPPluginName = keyof typeof gsapPlugins
+export type { GSAPPluginName } from './plugin-catalog'
 
 export interface ModuleOptions {
+  /**
+   * GSAP plugins to register on the client. Dependencies are added
+   * automatically and plugins not listed here are excluded from the bundle.
+   * @default []
+   */
   plugins?: GSAPPluginName[]
 }
 
@@ -18,14 +24,22 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     plugins: [],
   },
-  setup(_options, _nuxt) {
+  setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+    const plugins = resolveGSAPPlugins(options.plugins ?? [])
 
-    _nuxt.options.runtimeConfig.public.gsap = {
-      plugins: _options.plugins ?? [],
+    addTemplate({
+      filename: 'gsap-nuxt-module/config.mjs',
+      getContents: () => `export const appPageTransitionEnabled = ${JSON.stringify(nuxt.options.app.pageTransition !== false && Boolean(nuxt.options.app.pageTransition))}\n`,
+    })
+
+    if (plugins.length > 0) {
+      addPluginTemplate({
+        filename: 'gsap-nuxt-module/plugin.client.mjs',
+        mode: 'client',
+        getContents: () => renderGSAPPlugin(plugins),
+      })
     }
-
-    addPlugin({ src: resolve('./runtime/plugin'), mode: 'client' })
     addImportsDir(resolve('./runtime/composables'))
     addImportsDir(resolve('./runtime/utils'))
   },

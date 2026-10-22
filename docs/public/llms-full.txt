@@ -1,0 +1,75 @@
+# gsap-nuxt-module agent reference
+
+## Contract
+
+- GSAP core is auto-imported as `gsap` and available through `useGsap()`.
+- Configured plugins are validated and selected at build time.
+- Unconfigured plugins are excluded from client output.
+- Plugin registration is synchronous and client-only.
+- `useGsap(setup)` runs after mount, scopes selectors to the component root by
+  default, and reverts contexts on teardown.
+- `scope: null` explicitly enables global selectors.
+- With Nuxt page transitions, cleanup waits for `page:transition:finish` so
+  leave animations are not interrupted.
+- Navigation cancellation preserves the active page context; redirects and a
+  second navigation cannot leave an orphaned context behind.
+- Consumer builds are continuously checked against the latest Nuxt 3 and Nuxt
+  4 versions supported by the release.
+
+## Configuration
+
+```ts
+export default defineNuxtConfig({
+  modules: ['gsap-nuxt-module'],
+  gsap: {
+    plugins: ['ScrollSmoother', 'CustomBounce'],
+  },
+})
+```
+
+The example registers ScrollTrigger and CustomEase automatically.
+
+## useGsap
+
+```ts
+useGsap(setup, {
+  scope,                 // Element, component, ref, computed ref, or null
+  dependencies,          // WatchSource or WatchSource[]
+  revertOnUpdate: true,  // revert current contexts before rerunning
+})
+```
+
+`cleanupOn` is deprecated and accepted only for v1 compatibility.
+
+`contextSafe(handler)` attaches animations created later by event handlers to
+the active GSAP context. The handler must be side-effect-only; return values are
+not preserved.
+
+## Plugin composables
+
+Scroll: useScrollTrigger, useScrollToPlugin, useScrollSmoother.
+Text: useSplitText, useScrambleTextPlugin, useTextPlugin.
+SVG: useDrawSVGPlugin, useMorphSVGPlugin, useMotionPathPlugin,
+useMotionPathHelper.
+UI: useFlip, useDraggable, useInertiaPlugin, useObserver.
+Other: usePixiPlugin, useEaselPlugin, usePhysics2DPlugin,
+usePhysicsPropsPlugin, useGSDevTools.
+Eases: useCustomEase, useRoughEase, useExpoScaleEase, useSlowMo,
+useCustomBounce, useCustomWiggle.
+
+Call plugin composables during Vue setup, but create DOM-dependent plugin
+instances inside `onMounted` or `useGsap(setup)`.
+
+## Errors
+
+- `E_PLUGIN_UNKNOWN`: invalid name in `nuxt.config`; the build fails and offers
+  the nearest supported name.
+- `E_PLUGIN_NOT_ENABLED`: a plugin composable was called without enabling the
+  corresponding plugin.
+
+## Cleanup rules
+
+- Prefer `useGsap(setup)`.
+- Manually kill timelines/tweens created through zero-argument `useGsap()`.
+- Never call `gsap.registerPlugin()` in components; the module owns registration.
+- Do not globally kill plugin instances owned by other components.

@@ -13,6 +13,7 @@ Find and replace all on all files (CMD+SHIFT+F):
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
+[![npm size][npm-size-src]][npm-size-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
@@ -151,21 +152,36 @@ See the [full docs](https://lucaargentieri.github.io/gsap-nuxt-module/composable
 |---|---|---|
 | `useGsap()` | GSAP core | — (always available) |
 | `useScrollTrigger()` | ScrollTrigger | `ScrollTrigger` |
+| `useScrollToPlugin()` | ScrollToPlugin | `ScrollToPlugin` |
 | `useScrollSmoother()` | ScrollSmoother | `ScrollSmoother` |
 | `useSplitText()` | SplitText | `SplitText` |
+| `useScrambleTextPlugin()` | ScrambleTextPlugin | `ScrambleTextPlugin` |
+| `useTextPlugin()` | TextPlugin | `TextPlugin` |
+| `useDrawSVGPlugin()` | DrawSVGPlugin | `DrawSVGPlugin` |
+| `useMorphSVGPlugin()` | MorphSVGPlugin | `MorphSVGPlugin` |
+| `useMotionPathPlugin()` | MotionPathPlugin | `MotionPathPlugin` |
 | `useMotionPathHelper()` | MotionPathHelper | `MotionPathHelper` |
 | `useDraggable()` | Draggable | `Draggable` |
 | `useFlip()` | Flip | `Flip` |
+| `useInertiaPlugin()` | InertiaPlugin | `InertiaPlugin` |
 | `useObserver()` | Observer | `Observer` |
+| `usePixiPlugin()` | PixiPlugin | `PixiPlugin` |
+| `useEaselPlugin()` | EaselPlugin | `EaselPlugin` |
+| `usePhysics2DPlugin()` | Physics2DPlugin | `Physics2DPlugin` |
+| `usePhysicsPropsPlugin()` | PhysicsPropsPlugin | `PhysicsPropsPlugin` |
 | `useGSDevTools()` | GSDevTools | `GSDevTools` |
 | `useCustomEase()` | CustomEase | `CustomEase` |
+| `useRoughEase()` | RoughEase | `RoughEase` |
+| `useExpoScaleEase()` | ExpoScaleEase | `ExpoScaleEase` |
+| `useSlowMo()` | SlowMo | `SlowMo` |
 | `useCustomWiggle()` | CustomWiggle | `CustomWiggle` |
 | `useCustomBounce()` | CustomBounce | `CustomBounce` |
 
 ## Plugin loading
 
-Only plugins listed in `nuxt.config.ts` are dynamically imported —
-zero bundle overhead for unused plugins.
+Only plugins listed in `nuxt.config.ts` are imported into the generated client
+plugin. Unused plugins are absent from the build output, and required plugin
+dependencies are added automatically.
 
 ```ts
 // nuxt.config.ts
@@ -240,37 +256,56 @@ onUnmounted(() => tl.kill())
   
   ```bash
   # Install dependencies
-  npm install
+  bun install --frozen-lockfile
   
   # Generate type stubs
-  npm run dev:prepare
+  bun run dev:prepare
+
+  # Install Chromium once for browser and page-transition tests
+  bunx playwright install chromium
   
   # Develop with the playground
-  npm run dev
+  bun run dev
   
   # Build the playground
-  npm run dev:build
+  bun run dev:build
   
   # Run ESLint
-  npm run lint
+  bun run lint
   
-  # Run Vitest
-  npm run test
-  npm run test:watch
+  # Run the complete test suite, or a focused suite
+  bun run test
+  bun run test:unit
+  bun run test:ssr
+  bun run test:browser
+  bun run test:watch
+
+  # Run the complete release gate
+  bun run check
+
+  # Coverage, bundle budgets, and consumer compatibility
+  bun run test:coverage
+  bun run prepack && bun run test:bundle
+  NUXT_VERSION=3.21.11 bun run test:compat
+  NUXT_VERSION=4.6.2 bun run test:compat
   
-  # Release new version
-  npm run release
+  # Release a semver increment
+  bun run release:patch
+  bun run release:minor
+  bun run release:major
   ```
 
 </details>
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/npm/v/gsap-nuxt-module/latest.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-version-href]: https://npmjs.com/package/gsap-nuxt-module
-[npm-downloads-src]: https://img.shields.io/npm/dm/gsap-nuxt-module.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-downloads-href]: https://npm.chart.dev/gsap-nuxt-module
-[license-src]: https://img.shields.io/npm/l/gsap-nuxt-module.svg?style=flat&colorA=020420&colorB=00DC82
-[license-href]: https://npmjs.com/package/gsap-nuxt-module
+[npm-version-src]: https://npmx.dev/api/registry/badge/version/gsap-nuxt-module?style=shieldsio&labelColor=020420&color=00DC82
+[npm-version-href]: https://npmx.dev/package/gsap-nuxt-module
+[npm-downloads-src]: https://npmx.dev/api/registry/badge/downloads/gsap-nuxt-module?style=shieldsio&labelColor=020420&color=00DC82
+[npm-downloads-href]: https://npmx.dev/package/gsap-nuxt-module
+[npm-size-src]: https://npmx.dev/api/registry/badge/size/gsap-nuxt-module?style=shieldsio&labelColor=020420&color=00DC82
+[npm-size-href]: https://npmx.dev/package/gsap-nuxt-module
+[license-src]: https://npmx.dev/api/registry/badge/license/gsap-nuxt-module?style=shieldsio&labelColor=020420&color=00DC82
+[license-href]: https://npmx.dev/package/gsap-nuxt-module
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt.js
 [nuxt-href]: https://nuxt.com

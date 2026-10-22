@@ -3,14 +3,21 @@ import { createGsapComposable } from '../src/runtime/create-gsap-composable'
 
 // Controllable current-route mock for route-leave cleanup specs
 const mockRoute: { meta: Record<string, unknown> } = { meta: {} }
+const afterEachCallbacks: Array<(failure?: unknown) => void> = []
 
 vi.mock('#app', () => ({
   useNuxtApp: vi.fn(),
   useRoute: vi.fn(() => mockRoute),
+  useRouter: vi.fn(() => ({
+    afterEach: (cb: (_to: unknown, _from: unknown, failure?: unknown) => void) => {
+      afterEachCallbacks.push(failure => cb({}, {}, failure))
+      return vi.fn()
+    },
+  })),
 }))
 
-vi.mock('#build/nuxt.config.mjs', () => ({
-  appPageTransition: null,
+vi.mock('#build/gsap-nuxt-module/config.mjs', () => ({
+  appPageTransitionEnabled: false,
 }))
 
 // Intercept Vue lifecycle hooks so they can be triggered manually in tests.
@@ -19,6 +26,7 @@ const mountedCallbacks: Array<() => void> = []
 const unmountedCallbacks: Array<() => void> = []
 const watchCallbacks: Array<() => void> = []
 const transitionFinishCallbacks: Array<() => void> = []
+const pageStartCallbacks: Array<() => void> = []
 
 // Controllable current-instance mock for auto-scope specs
 let currentInstance: { proxy: { $el: unknown } } | null = null
@@ -49,6 +57,9 @@ const setRouteMeta = (meta: Record<string, unknown> = {}) => {
 const finishTransition = () => {
   transitionFinishCallbacks.forEach(cb => cb())
 }
+const startPage = () => {
+  pageStartCallbacks.forEach(cb => cb())
+}
 
 const mockContext = (revert = vi.fn()) => ({
   add: vi.fn((fn: () => unknown) => fn()),
@@ -61,25 +72,27 @@ const mockNuxtAppHooks = async () => {
   const { useNuxtApp } = await import('#app')
   vi.mocked(useNuxtApp).mockReturnValue({
     hooks: {
-      hookOnce: vi.fn((event: string, cb: () => void) => {
-        if (event === 'page:transition:finish') {
-          transitionFinishCallbacks.push(cb)
-        }
+      hook: vi.fn((event: string, cb: () => void) => {
+        if (event === 'page:transition:finish') transitionFinishCallbacks.push(cb)
+        if (event === 'page:start') pageStartCallbacks.push(cb)
         return vi.fn()
       }),
     },
   } as unknown as ReturnType<typeof useNuxtApp>)
 }
 
-const resetLifecycle = () => {
+const resetLifecycle = async () => {
   mountedCallbacks.length = 0
   unmountedCallbacks.length = 0
   watchCallbacks.length = 0
   transitionFinishCallbacks.length = 0
+  pageStartCallbacks.length = 0
+  afterEachCallbacks.length = 0
   currentInstance = null
   mockRoute.meta = {}
   vi.restoreAllMocks()
   vi.clearAllMocks()
+  await mockNuxtAppHooks()
 }
 
 describe('createGsapComposable', () => {
@@ -105,7 +118,7 @@ describe('createGsapComposable', () => {
     const useScrollTrigger = createGsapComposable('ScrollTrigger')
 
     expect(() => useScrollTrigger()).toThrow(
-      '[useScrollTrigger] ScrollTrigger is not registered! Did you enable it in nuxt.config.ts?',
+      '[gsap-nuxt-module:E_PLUGIN_NOT_ENABLED] ScrollTrigger is not registered. Add "ScrollTrigger" to gsap.plugins in nuxt.config.ts.',
     )
   })
 
@@ -235,6 +248,7 @@ describe('useGsap route-leave cleanup', () => {
     useGsap(() => {})
     mount()
 
+    startPage()
     unmount()
     expect(revertSpy).not.toHaveBeenCalled()
 
@@ -254,8 +268,29 @@ describe('useGsap route-leave cleanup', () => {
     useGsap(() => {}, { cleanupOn: 'route-leave' })
     mount()
 
+    startPage()
     unmount()
     finishTransition()
+    finishTransition()
+
+    expect(revertSpy).toHaveBeenCalledOnce()
+  })
+
+  it('reverts on the next navigation when a leave transition is interrupted', async () => {
+    await mockNuxtAppHooks()
+    const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
+    const { gsap } = await import('gsap')
+
+    const revertSpy = vi.fn()
+    vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
+
+    setRouteMeta({ pageTransition: { name: 'page' } })
+    useGsap(() => {})
+    mount()
+
+    startPage()
+    unmount()
+    startPage()
     finishTransition()
 
     expect(revertSpy).toHaveBeenCalledOnce()
@@ -268,14 +303,13 @@ describe('useGsap route-leave cleanup', () => {
     const revertSpy = vi.fn()
     vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
 
-    // No pageTransition in meta and appPageTransition is null → willTransition
+    // No pageTransition in meta and appPageTransitionEnabled is false → willTransition
     // is false, so no page:transition:finish hook is registered
     setRouteMeta({})
     useGsap(() => {})
     mount()
 
     unmount()
-    expect(transitionFinishCallbacks).toHaveLength(0)
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 
@@ -291,7 +325,6 @@ describe('useGsap route-leave cleanup', () => {
     mount()
 
     unmount()
-    expect(transitionFinishCallbacks).toHaveLength(0)
     expect(revertSpy).toHaveBeenCalledOnce()
   })
 })
@@ -333,21 +366,29 @@ describe('useGsap options', () => {
     expect(secondRevertSpy).not.toHaveBeenCalled()
   })
 
-  it('does not revert or re-run setup on dependency update when revertOnUpdate is false', async () => {
+  it('re-runs setup without reverting previous contexts when revertOnUpdate is false', async () => {
     const { useGsap } = await import('../src/runtime/composables/createGsapComposable')
     const { gsap } = await import('gsap')
     const { ref } = await import('vue')
 
-    const revertSpy = vi.fn()
-    const contextSpy = vi.spyOn(gsap, 'context').mockReturnValue(mockContext(revertSpy))
+    const firstRevertSpy = vi.fn()
+    const secondRevertSpy = vi.fn()
+    const contextSpy = vi.spyOn(gsap, 'context')
+      .mockReturnValueOnce(mockContext(firstRevertSpy))
+      .mockReturnValueOnce(mockContext(secondRevertSpy))
 
     const dep = ref(0)
     useGsap(() => {}, { dependencies: dep, revertOnUpdate: false })
     mount()
     triggerWatch()
 
-    expect(revertSpy).not.toHaveBeenCalled()
-    expect(contextSpy).toHaveBeenCalledTimes(1)
+    expect(firstRevertSpy).not.toHaveBeenCalled()
+    expect(secondRevertSpy).not.toHaveBeenCalled()
+    expect(contextSpy).toHaveBeenCalledTimes(2)
+
+    unmount()
+    expect(firstRevertSpy).toHaveBeenCalledOnce()
+    expect(secondRevertSpy).toHaveBeenCalledOnce()
   })
 
   it('passes scope element to gsap.context when scope option is provided', async () => {

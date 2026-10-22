@@ -1,5 +1,5 @@
-import { useNuxtApp, useRoute } from '#app'
-import { appPageTransition as defaultPageTransition } from '#build/nuxt.config.mjs'
+import { useNuxtApp, useRoute, useRouter } from '#app'
+import { appPageTransitionEnabled } from '#build/gsap-nuxt-module/config.mjs'
 import { gsap } from 'gsap'
 import type { WatchSource } from 'vue'
 import { getCurrentInstance, onMounted, onUnmounted, watch } from 'vue'
@@ -27,6 +27,11 @@ export interface UseGsapOptions {
    */
   scope?: GsapScope
   dependencies?: WatchSource | WatchSource[]
+  /**
+   * Revert existing contexts before a dependency-driven setup rerun. When
+   * false, contexts accumulate intentionally and are all reverted on unmount.
+   * @default true
+   */
   revertOnUpdate?: boolean
   /**
    * When to revert the GSAP context during page navigation.
@@ -90,6 +95,10 @@ export function useGsap(
   }
 
   let ctx: gsap.Context | null = null
+  const contexts: gsap.Context[] = []
+  const stopCleanupHooks: Array<() => void> = []
+  let transitionRunning = false
+  let pendingUnmount = false
 
   // Captured at call time: `scope` defaults to the calling component's root
   // element so selectors stay contained without explicit wiring.
@@ -98,6 +107,12 @@ export function useGsap(
   // requires the caller to be a descendant of `<router-view>` — useGsap must
   // support components outside it too (layouts, shared UI, etc.).
   const route = useRoute()
+  // Capture the owning route. By unmount time `useRoute()` may already expose
+  // the destination route, whose transition settings do not describe the
+  // component that is leaving.
+  const pageTransition = route.meta.pageTransition
+  const willTransition = pageTransition !== false
+    && !!(pageTransition ?? appPageTransitionEnabled)
   const nuxtApp = useNuxtApp()
 
   const runSetup = () => {
@@ -105,11 +120,40 @@ export function useGsap(
       ? unrefElement(options.scope)
       : unrefElement(instance?.proxy)
     ctx = gsap.context(setup, scope)
+    contexts.push(ctx)
   }
 
-  const clearContext = () => {
-    ctx?.revert()
+  const revertContexts = () => {
+    for (const context of contexts.splice(0).reverse()) context.revert()
     ctx = null
+  }
+
+  const dispose = () => {
+    pendingUnmount = false
+    for (const stop of stopCleanupHooks.splice(0)) stop()
+    revertContexts()
+  }
+
+  if (willTransition) {
+    const router = useRouter()
+    // Subscribe before navigation begins. Depending on Vue's transition timing,
+    // page:transition:finish may run just before or just after onUnmounted.
+    stopCleanupHooks.push(
+      nuxtApp.hooks.hook('page:start', () => {
+        if (pendingUnmount) {
+          dispose()
+          return
+        }
+        transitionRunning = true
+      }),
+      nuxtApp.hooks.hook('page:transition:finish', () => {
+        transitionRunning = false
+        if (pendingUnmount) dispose()
+      }),
+      router.afterEach((_to, _from, failure) => {
+        if (failure) transitionRunning = false
+      }),
+    )
   }
 
   onMounted(() => {
@@ -123,8 +167,7 @@ export function useGsap(
     watch(
       deps,
       () => {
-        if (options.revertOnUpdate === false) return
-        clearContext()
+        if (options.revertOnUpdate !== false) revertContexts()
         runSetup()
       },
       { flush: 'post' },
@@ -132,17 +175,8 @@ export function useGsap(
   }
 
   onUnmounted(() => {
-    const willTransition = route.meta.pageTransition !== false
-      && !!(route.meta.pageTransition ?? defaultPageTransition)
-
-    if (willTransition) {
-      nuxtApp.hooks.hookOnce('page:transition:finish', () => {
-        clearContext()
-      })
-    }
-    else {
-      clearContext()
-    }
+    pendingUnmount = willTransition && transitionRunning
+    if (!pendingUnmount) dispose()
   })
 
   const contextSafe: ContextSafeFn = <F extends (...args: unknown[]) => void>(fn: F): F => {
@@ -162,29 +196,57 @@ export function useGsap(
 // Scroll Plugins
 export const useScrollTrigger
   = createGsapComposable<typeof import('gsap/ScrollTrigger').ScrollTrigger>('ScrollTrigger')
+export const useScrollToPlugin
+  = createGsapComposable<typeof import('gsap/ScrollToPlugin').ScrollToPlugin>('ScrollToPlugin')
 export const useScrollSmoother
   = createGsapComposable<typeof import('gsap/ScrollSmoother').ScrollSmoother>('ScrollSmoother')
 
 // Text Plugins
 export const useSplitText
   = createGsapComposable<typeof import('gsap/SplitText').SplitText>('SplitText')
+export const useScrambleTextPlugin
+  = createGsapComposable<typeof import('gsap/ScrambleTextPlugin').ScrambleTextPlugin>('ScrambleTextPlugin')
+export const useTextPlugin
+  = createGsapComposable<typeof import('gsap/TextPlugin').TextPlugin>('TextPlugin')
 
 // SVG Plugins
+export const useDrawSVGPlugin
+  = createGsapComposable<typeof import('gsap/DrawSVGPlugin').DrawSVGPlugin>('DrawSVGPlugin')
+export const useMorphSVGPlugin
+  = createGsapComposable<typeof import('gsap/MorphSVGPlugin').MorphSVGPlugin>('MorphSVGPlugin')
+export const useMotionPathPlugin
+  = createGsapComposable<typeof import('gsap/MotionPathPlugin').MotionPathPlugin>('MotionPathPlugin')
 export const useMotionPathHelper
   = createGsapComposable<typeof import('gsap/MotionPathHelper').MotionPathHelper>('MotionPathHelper')
 
 // UI Plugins
-export const useDraggable = createGsapComposable<typeof import('gsap/all').Draggable>('Draggable')
-export const useFlip = createGsapComposable<typeof import('gsap/all').Flip>('Flip')
-export const useObserver = createGsapComposable<typeof import('gsap/all').Observer>('Observer')
+export const useDraggable = createGsapComposable<typeof import('gsap/Draggable').Draggable>('Draggable')
+export const useFlip = createGsapComposable<typeof import('gsap/Flip').Flip>('Flip')
+export const useInertiaPlugin
+  = createGsapComposable<typeof import('gsap/InertiaPlugin').InertiaPlugin>('InertiaPlugin')
+export const useObserver = createGsapComposable<typeof import('gsap/Observer').Observer>('Observer')
 
 // Other Plugins
+export const usePixiPlugin
+  = createGsapComposable<typeof import('gsap/PixiPlugin').PixiPlugin>('PixiPlugin')
+export const useEaselPlugin
+  = createGsapComposable<typeof import('gsap/EaselPlugin').EaselPlugin>('EaselPlugin')
+export const usePhysics2DPlugin
+  = createGsapComposable<typeof import('gsap/Physics2DPlugin').Physics2DPlugin>('Physics2DPlugin')
+export const usePhysicsPropsPlugin
+  = createGsapComposable<typeof import('gsap/PhysicsPropsPlugin').PhysicsPropsPlugin>('PhysicsPropsPlugin')
 export const useGSDevTools
   = createGsapComposable<typeof import('gsap/GSDevTools').GSDevTools>('GSDevTools')
 
 // Eases
 export const useCustomEase
   = createGsapComposable<typeof import('gsap/CustomEase').CustomEase>('CustomEase')
+export const useRoughEase
+  = createGsapComposable<typeof import('gsap/EasePack').RoughEase>('RoughEase')
+export const useExpoScaleEase
+  = createGsapComposable<typeof import('gsap/EasePack').ExpoScaleEase>('ExpoScaleEase')
+export const useSlowMo
+  = createGsapComposable<typeof import('gsap/EasePack').SlowMo>('SlowMo')
 export const useCustomWiggle
   = createGsapComposable<typeof import('gsap/CustomWiggle').CustomWiggle>('CustomWiggle')
 export const useCustomBounce

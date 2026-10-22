@@ -9,6 +9,10 @@
   "author": "Luca Argentieri",
   "license": "MIT",
   "type": "module",
+  "packageManager": "bun@1.4.3",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "keywords": [
     "nuxt",
     "nuxt-module",
@@ -30,10 +34,20 @@
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
-    "release": "npm run lint && npm run prepack && changelogen --release --patch && npm publish && git push --follow-tags",
+    "check": "bun run lint && bun run test && bun run test:coverage && bun run test:types && bun run prepack && bun run test:bundle",
+    "release": "bun run release:patch",
+    "release:patch": "bun run check && changelogen --release --patch && npm publish --provenance && git push --follow-tags",
+    "release:minor": "bun run check && changelogen --release --minor && npm publish --provenance && git push --follow-tags",
+    "release:major": "bun run check && changelogen --release --major && npm publish --provenance && git push --follow-tags",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
+    "test:unit": "vitest run test/composables.test.ts test/plugin-catalog.test.ts",
+    "test:ssr": "vitest run test/basic.test.ts test/transitions.test.ts",
+    "test:browser": "vitest run test/transitions.browser.test.ts",
+    "test:coverage": "vitest run --coverage test/composables.test.ts test/plugin-catalog.test.ts",
+    "test:bundle": "bun scripts/check-bundle.ts",
+    "test:compat": "bun scripts/test-compat.ts",
     "test:watch": "vitest watch",
     "test:types": "vue-tsc --noEmit && nuxi prepare playground && cd playground && vue-tsc --noEmit"
   },
@@ -42,17 +56,21 @@
     "gsap": "^3.15.0"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.147",
     "@nuxt/devtools": "^3.0.0",
     "@nuxt/eslint-config": "^1.1.0",
     "@nuxt/module-builder": "^1.0.1",
     "@nuxt/schema": "^4.0.0",
     "@nuxt/test-utils": "^4.0.0",
+    "@nuxt/ui": "^4.12.0",
+    "@playwright/test": "^1.56.0",
     "@types/node": "latest",
+    "@vitest/coverage-v8": "^5.0.0",
     "changelogen": "^0.6.0",
     "eslint": "^10.0.0",
     "nuxt": "^4.0.0",
     "typescript": "^6.0.0",
-    "vitest": "^4.0.0",
+    "vitest": "^5.0.0",
     "vue-tsc": "^3.0.0"
   }
 }

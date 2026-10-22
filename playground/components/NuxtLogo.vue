@@ -32,7 +32,7 @@
 
 <style scoped>
 svg {
-    width: 200px;
-    height: 200px;
+    width: 164px;
+    height: auto;
 }
 </style>

@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.3.0 (unreleased)
+
+### Enhancements
+
+- Select and validate GSAP plugins at build time so disabled plugins are absent from client output.
+- Add typed composables for every supported GSAP plugin and resolve plugin dependencies automatically.
+- Add real-browser coverage for global, disabled, and outside-router-view page-transition scenarios.
+- Add Vitest 5 coverage thresholds, bundle budgets, and Nuxt 3/4 consumer compatibility checks.
+- Split CI into focused quality, SSR, browser, and compatibility jobs.
+- Add agent-oriented repository guidance and `llms.txt` documentation.
+
+### Fixes
+
+- Re-run reactive GSAP setups when `revertOnUpdate` is false while retaining all contexts for final cleanup.
+- Capture the leaving route's transition setting before the destination route can replace it.
+- Clean up GSAP contexts reliably when redirects or rapid navigation interrupt a page transition.
+
 
 ## v1.2.4
 

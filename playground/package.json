@@ -8,6 +8,10 @@
     "generate": "nuxi generate"
   },
   "dependencies": {
+    "@fontsource/geist-mono": "^5.2.6",
+    "@fontsource/public-sans": "^5.2.7",
+    "@iconify-json/lucide": "^1.2.147",
+    "@nuxt/ui": "^4.12.0",
     "nuxt": "^4.2.2"
   }
 }

@@ -38,7 +38,7 @@ This skill is structured to mirror GSAP docs sections as closely as possible, wi
 |------|-------------|-----------|
 | Utility methods | Full `gsap.utils` usage map and compositional patterns | [useful-utility-methods](references/useful-utility-methods.md) |
 | Helper functions | Canonical GSAP helper-function catalog and practical picks | [useful-helper-functions](references/useful-helper-functions.md) |
-| Staggers + React | Stagger design, useGSAP integration, app architecture tips | [useful-react-staggers-tools](references/useful-react-staggers-tools.md) |
+| Staggers + context | Stagger design, context integration, and cleanup patterns | [useful-staggers-and-context](references/useful-staggers-and-context.md) |
 
 ## Agent workflow
 

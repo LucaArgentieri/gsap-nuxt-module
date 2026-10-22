@@ -44,10 +44,10 @@ export default defineAppConfig({
       ],
     },
   },
-  // ui: {
-  //   colors: {
-  //     primary: "gsap",
-  //     neutral: "zinc",
-  //   },
-  // },
+  ui: {
+    colors: {
+      primary: 'green',
+      neutral: 'slate',
+    },
+  },
 })

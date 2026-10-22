@@ -1,0 +1,43 @@
+# gsap-nuxt-module
+
+Nuxt 3/4 module for typed, build-time GSAP plugin registration and scoped
+animation lifecycle management.
+
+Documentation: https://lucaargentieri.github.io/gsap-nuxt-module/
+Repository: https://github.com/LucaArgentieri/gsap-nuxt-module
+GSAP docs: https://gsap.com/docs/v3/
+
+## Install
+
+```bash
+bun add gsap-nuxt-module
+```
+
+```ts
+export default defineNuxtConfig({
+  modules: ['gsap-nuxt-module'],
+  gsap: { plugins: ['ScrollTrigger'] },
+})
+```
+
+## Preferred usage
+
+```vue
+<script setup lang="ts">
+const root = ref<HTMLElement | null>(null)
+
+useGsap(() => {
+  gsap.from('.item', { opacity: 0, y: 24 })
+}, { scope: root })
+</script>
+```
+
+Use `useGsap(setup)` for automatic cleanup and page-transition-aware teardown.
+Redirected, cancelled, and rapid consecutive navigations are lifecycle-safe.
+Use zero-argument `useGsap()` only when cleanup is managed manually.
+
+Plugin composables are named `use<Plugin>()` and require the matching entry in
+`gsap.plugins`. Dependencies are automatic: ScrollSmoother adds ScrollTrigger;
+CustomWiggle and CustomBounce add CustomEase.
+
+Full agent reference: /gsap-nuxt-module/llms-full.txt

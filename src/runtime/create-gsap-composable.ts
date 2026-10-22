@@ -25,7 +25,7 @@ export function createGsapComposable<T>(
     const plugin = nuxtApp[`$${pluginName}`] as NonNullable<T> | undefined
     if (!plugin) {
       throw new Error(
-        fallbackMessage || `[use${pluginName}] ${pluginName} is not registered! Did you enable it in nuxt.config.ts?`,
+        fallbackMessage || `[gsap-nuxt-module:E_PLUGIN_NOT_ENABLED] ${pluginName} is not registered. Add "${pluginName}" to gsap.plugins in nuxt.config.ts.`,
       )
     }
     return plugin

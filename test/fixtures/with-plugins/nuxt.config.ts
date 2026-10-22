@@ -5,6 +5,6 @@ export default defineNuxtConfig({
     MyModule,
   ],
   gsap: {
-    plugins: ['ScrollTrigger', 'Flip'],
+    plugins: ['ScrollSmoother', 'Flip'],
   },
 })

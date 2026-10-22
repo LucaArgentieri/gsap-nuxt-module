@@ -25,11 +25,11 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.3
 
       - name: Install docs deps
         working-directory: docs
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Generate static site
         working-directory: docs

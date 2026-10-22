@@ -8,6 +8,11 @@
     "preview": "nuxi preview"
   },
   "dependencies": {
-    "docus": "^5.7.0"
+    "@fontsource/geist-mono": "^5.2.6",
+    "@fontsource/public-sans": "^5.2.7",
+    "@iconify-json/lucide": "^1.2.147",
+    "@iconify-json/simple-icons": "^1.2.100",
+    "@iconify-json/vscode-icons": "^1.2.92",
+    "docus": "5.7.0"
   }
 }

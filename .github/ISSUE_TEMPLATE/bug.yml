@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible gsap-nuxt-module problem
+title: "bug: "
+labels: [bug]
+body:
+  - type: input
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: StackBlitz or repository URL
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Nuxt, gsap-nuxt-module, GSAP, Node, and package manager
+    validations:
+      required: true
+  - type: dropdown
+    id: rendering
+    attributes:
+      label: Rendering mode
+      options: [SSR, SPA, SSG, Hybrid]
+    validations:
+      required: true
+  - type: textarea
+    id: plugins
+    attributes:
+      label: Enabled plugins and page-transition configuration
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: shell

@@ -58,7 +58,7 @@ Everything you need to bring GSAP animations into a Nuxt app — nothing more.
     ---
     icon: i-lucide-package-minus
     title: Zero unused overhead
-    description: Plugins are dynamically imported only when listed in your nuxt.config.ts — your bundle stays lean.
+    description: Only plugins listed in your nuxt.config.ts are statically included — your bundle stays lean.
     ---
     ::
 
